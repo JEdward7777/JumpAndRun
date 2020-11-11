@@ -246,6 +246,29 @@ class Person extends Thing{
       if( !dead ){
         float bottom = loc.y+.5*size.y;
         
+        float go_speed = walk_speed;
+        if( in_water ) go_speed *= .5;
+        
+        if( keyCode == LEFT ){
+          speed.x = -go_speed;
+        }else if( keyCode == RIGHT ){
+          speed.x = +go_speed;
+        }else{
+          speed.x = 0;
+        }
+          
+        
+        if( keyCode == UP || keyCode == 32 ){
+          if( !person.in_water ){
+            jump();
+          }else{
+            speed.y = -go_speed;
+          }
+        }else if( keyCode == DOWN ){
+          if( person.in_water ){
+            speed.y = go_speed;
+          }
+        }
         
         if( bottom < floor ){
           speed = speed.plus( gravity );
@@ -305,24 +328,20 @@ class Person extends Thing{
     println( "In figure_shift_action" );
   }
 }
+
+void keyReleased(){
+  //if( keyCode == RIGHT && person.speed.x > 0 ){
+  //  person.speed.x = 0;
+  //}else if( keyCode == LEFT && person.speed.x < 0 ){  
+  //  person.speed.x = 0;
+  //}
+  keyCode = 0;
+}
+
 void keyPressed() {
   //println( keyCode );
   if( !person.maker_mode ){
-    if( keyCode == LEFT ){
-      person.speed.x = -walk_speed;
-    }else if( keyCode == RIGHT ){
-      person.speed.x = +walk_speed;
-    }else if( keyCode == UP || keyCode == 32 ){
-      if( !person.in_water ){
-        person.jump();
-      }else{
-        person.speed.y = -walk_speed;
-      }
-    }else if( keyCode == DOWN ){
-      if( person.in_water ){
-        person.speed.y = walk_speed;
-      }
-    }else if( key == 'm' ){
+    if( key == 'm' ){
       person.maker_mode = !person.maker_mode;
     }else if( keyCode == SHIFT ){
       person.figure_shift_action(); 
@@ -429,13 +448,7 @@ void keyPressed() {
   }
 }
 
-void keyReleased(){
-  if( keyCode == RIGHT && person.speed.x > 0 ){
-    person.speed.x = 0;
-  }else if( keyCode == LEFT && person.speed.x < 0 ){  
-    person.speed.x = 0;
-  }
-}
+
 
 class StartBlock extends Thing{
   
