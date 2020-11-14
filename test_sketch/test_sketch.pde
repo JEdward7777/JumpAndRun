@@ -762,21 +762,24 @@ abstract class Badguy extends Thing{
   }
   
   public void draw(){
-    float bottom = loc.y+.5*size.y;
+    if( !person.maker_mode ){
     
-    
-    if( bottom < floor ){
-      speed = speed.plus( gravity );
-    }else{
-      loc.y = floor - .5*size.y;
-      if( speed.y > 0 ) speed.y = 0;
+      float bottom = loc.y+.5*size.y;
+      
+      
+      if( bottom < floor ){
+        speed = speed.plus( gravity );
+      }else{
+        loc.y = floor - .5*size.y;
+        if( speed.y > 0 ) speed.y = 0;
+      }
+      
+      for( Thing other_thing : all_things ){
+         other_thing.interact(this,false); 
+      }
+      
+      loc = loc.plus( speed ); 
     }
-    
-    for( Thing other_thing : all_things ){
-       other_thing.interact(this,false); 
-    }
-    
-    if( !person.maker_mode ) loc = loc.plus( speed ); 
     
   }
 }
