@@ -238,6 +238,7 @@ LinkedList< Key >   all_keys   = new LinkedList< Key >();
 class Person extends Thing{
   boolean maker_mode = false;
   boolean dead = false;
+  Loc desired_direction = new Loc();
   public Person(){
      loc.x = 640/2;
   }
@@ -249,24 +250,12 @@ class Person extends Thing{
         float go_speed = walk_speed;
         if( in_water ) go_speed *= .5;
         
-        if( keyCode == LEFT ){
-          speed.x = -go_speed;
-        }else if( keyCode == RIGHT ){
-          speed.x = +go_speed;
-        }else{
-          speed.x = 0;
+        speed.x = desired_direction.x*go_speed;
+        
+        if( person.in_water ){
+          speed.y = desired_direction.y*go_speed;
         }
           
-        
-        if( keyCode == UP || keyCode == 32 ){
-          if( person.in_water ){
-            speed.y = -go_speed;
-          }
-        }else if( keyCode == DOWN ){
-          if( person.in_water ){
-            speed.y = go_speed;
-          }
-        }
         
         speed = speed.plus( gravity );
         
@@ -300,7 +289,7 @@ class Person extends Thing{
     //This is a brick telling us how much we are intersecting.
     if( push.y != 0 )if( (push.y > 0) != (speed.y > 0) ) speed.y = 0;
     if( push.x != 0 )if( (push.x > 0) != (speed.x > 0) ) speed.x = 0;
-    if( keyCode == UP && push.y < 0 ) jump();
+    if( desired_direction.y < 0 && push.y < 0 ) jump();
     loc = loc.plus(push);
   }
   public void jump(){
@@ -327,15 +316,16 @@ class Person extends Thing{
   }
 }
 
-void keyReleased(KeyEvent event){
-  if( event.getKeyCode() == keyCode ) keyCode = 0;
-  
-  //if( keyCode == RIGHT && person.speed.x > 0 ){
-  //  person.speed.x = 0;
-  //}else if( keyCode == LEFT && person.speed.x < 0 ){  
-  //  person.speed.x = 0;
-  //}
-//  keyCode = 0;
+void keyReleased(){
+  if( keyCode == RIGHT && person.desired_direction.x > 0 ){
+    person.desired_direction.x = 0;
+  }else if( keyCode == LEFT && person.desired_direction.x < 0 ){  
+    person.desired_direction.x = 0;
+  }else if( keyCode == DOWN && person.desired_direction.y > 0 ){  
+    person.desired_direction.y = 0;
+  }else if( keyCode == UP && person.desired_direction.y < 0 ){  
+    person.desired_direction.y = 0;
+  }
 }
 
 void keyPressed() {
@@ -348,6 +338,14 @@ void keyPressed() {
     }else if( key == 'r' ){
       person.loc = the_start_block.loc.copy();
       person.dead = false;
+    }else if( keyCode == UP ){
+      person.desired_direction.y = -1;
+    }else if( keyCode == DOWN ){
+      person.desired_direction.y = 1;
+    }else if( keyCode == LEFT ){
+      person.desired_direction.x = -1;
+    }else if( keyCode == RIGHT ){
+      person.desired_direction.x = 1;
     }
   }else{
     if( keyCode == LEFT ){
