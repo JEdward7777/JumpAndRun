@@ -4,7 +4,84 @@ import java.util.LinkedList;
 color blue = color( 0,0,255 );
 color red = color( 255, 0, 0 );
 
-
+class StartMenu extends Menu{
+  String code = "";
+  boolean wrong_code = false;
+  
+  public void draw(){
+    pushStyle();
+    strokeWeight(10);
+    stroke(255, 220, 43);
+    fill(255, 249, 217, 230);
+    
+    float menu_width = 500;
+    float menu_height = 400;
+    
+    
+    rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
+    
+    textAlign(CENTER, BOTTOM);
+    
+    fill(0);
+    textSize(30);
+    text( "Type level code or press enter", width*.5, .5*(height-menu_height)+50 );
+    
+    //Draw box
+    fill(255);
+    Loc box_size = new Loc();
+    Loc box_pos = new Loc();
+    box_size.x = menu_width * .8;
+    box_size.y = 100;
+    box_pos.x = .5*width;
+    box_pos.y = .5*(height-menu_height)+200;
+    strokeWeight(5);
+    rect( box_pos.x-.5*box_size.x, box_pos.y-.5*box_size.y, box_size.x, box_size.y, 10 );
+    
+    //now draw the code which is being typed
+    fill(0);
+    textSize(100);
+    textAlign(LEFT, CENTER);
+    text( code, box_pos.x-.5*box_size.x + 5, box_pos.y );
+    
+    //now draw wrong code text
+    if( wrong_code ){
+      textSize(30);
+      fill( 255, 0, 0 );
+      textAlign(CENTER, BOTTOM);
+      text( "Wrong code", width*.5, .5*(height-menu_height)+300 );
+    }
+    
+    popStyle();
+  }
+  public void keyPressed(){
+    wrong_code = false;
+    if( keyCode == BACKSPACE ){
+      if( code.length() > 0 ){
+        code = code.substring( 0, code.length()-1 );
+      }
+    }else if( key==ENTER||key==RETURN ){
+      testCode();
+    }else{
+      if( code.length() < 6 ){
+        code = code + key;
+      }
+    }
+  }
+  void testCode(){
+    if( code.equals("835207") ){
+      //level2();
+    }else if( code.equals( "" ) ){
+      level1();
+      menu = null;
+    }else{
+      wrong_code = true;
+    }
+    
+  }
+}
+void show_start_menu(){
+  menu = new StartMenu(); 
+}
 
 class Loc{
   float x;
@@ -234,6 +311,12 @@ float floor = block_size.y*10.5;
 LinkedList< Thing > things_to_remove = new LinkedList< Thing >();
 LinkedList< Thing > all_things = new LinkedList< Thing >();
 LinkedList< Key >   all_keys   = new LinkedList< Key >();
+void remove_things(){
+  things_to_remove.clear();
+  all_things.clear();
+  all_keys.clear();
+  all_things.add(person);
+}
 
 class Person extends Thing{
   boolean maker_mode = false;
@@ -330,7 +413,9 @@ void keyReleased(){
 
 void keyPressed() {
   //println( keyCode );
-  if( !person.maker_mode ){
+  if( menu != null ){
+    menu.keyPressed();
+  }else if( !person.maker_mode ){
     if( key == 'm' ){
       person.maker_mode = !person.maker_mode;
     }else if( keyCode == SHIFT ){
@@ -842,7 +927,8 @@ void setup() {
   
   person = new Person();
   all_things.add(person);
-  level1();
+  //level1();
+  show_start_menu();
 }
 
 // The statements in draw() are run until the 
@@ -876,13 +962,22 @@ void draw() {
   }
   
   popMatrix();
+  
+  if( menu != null ) menu.draw();
 } 
 
+abstract class Menu{
+  abstract void draw();
+  abstract void keyPressed();
+}
+
+Menu menu = null;
 
 
 //Define level
 void level1(){
-  person.maker_mode = true;
+  remove_things();
+  //person.maker_mode = true;
 start_block( -3.0, 7.0 );solid_brick( -16.5, -2.5, 20.0, 26.0 );solid_brick( 12.0, 6.0, 11.0, 1.0 );solid_brick( 17.0, 5.0, 1.0, 1.0 );walky2( 16.0, 5.0, 1.0, -5.0 );coin( 9.0, 3.0 );coin( 12.0, 3.0 );coin( 15.0, 3.0 );coin( 1.0, 3.0 );solid_brick( 21.5, 1.0, 10.0, 1.0 );walky2( 26.0, 0.0, 1.0, -5.0 );solid_brick( 30.5, 6.0, 4.0, 9.0 );walky2( 21.0, 7.8896623, 5.220675, -5.6E-45 );coin( -25.0, -18.0 );coin( -23.0, -18.0 );coin( -20.0, -18.0 );coin( -22.0, -18.0 );coin( -18.0, -18.0 );coin( -15.0, -18.0 );coin( -13.0, -18.0 );coin( -10.0, -18.0 );coin( -8.0, -18.0 );coin( -9.0, -20.0 );coin( -12.0, -20.0 );coin( -15.0, -20.0 );coin( -18.0, -20.0 );coin( -21.0, -20.0 );coin( -23.0, -20.0 );solid_brick( -26.0, -16.0, 1.0, 1.0 );solid_brick( -7.0, -16.0, 1.0, 1.0 );walky2( -22.0, -16.15, 0.42598403, -5.0 );teleporter( -16.0, -19.0 );teleporter( 65.0, 10.0 );coin( 18.0, -2.0 );coin( 21.0, -2.0 );coin( 25.0, -2.0 );coin( 35.0, 7.0 );coin( 39.0, 7.0 );coin( 44.0, 7.0 );solid_brick( 56.0, 3.0, 1.0, 15.0 );solid_brick( 76.0, 3.0, 1.0, 15.0 );solid_brick( 60.0, 5.0, 1.0, 1.0 );solid_brick( 67.5, 6.0, 16.0, 1.0 );solid_brick( 73.0, 1.0, 1.0, 1.0 );solid_brick( 65.0, 2.0, 17.0, 1.0 );teleporter( 55.0, 10.0 );teleporter( 56.0, -5.0 );walky2( 57.0, 1.0, 1.0, -5.0 );walky2( 62.0, 5.0, 1.0, -5.0 );walky2( 66.0, 5.0, 1.0, -5.0 );coin( 60.0, 8.0 );coin( 63.0, 8.0 );coin( 66.0, 8.0 );coin( 69.0, 8.0 );coin( 72.0, 8.0 );coin( 74.0, 8.0 );walky2( 67.0, -1.0, 3.089157, -5.0 );solid_brick( 67.0, -4.0, 17.0, 1.0 );key(255,0,0,75.0,10.0);teleporter( 82.0, 7.0 );teleporter( 90.0, 7.0 );teleporter( 86.0, 7.0 );teleporter( 98.0, 7.0 );teleporter( 94.0, 7.0 );teleporter( 75.0, -5.0 );walky2( 84.0, 10.0, 1.0, -5.0 );door(105.0, 10.0, 105.0, 3.0);button( 66.0, -5.0 );solid_brick( 105.0, -1.0, 1.0, 7.0 );solid_brick( 116.0, -4.0, 21.0, 1.0 );solid_brick( 126.0, 2.0, 1.0, 11.0 );solid_brick( 115.5, 6.0, 12.0, 1.0 );solid_brick( 115.5, 2.0, 6.0, 1.0 );coin( 110.0, 3.0 );coin( 113.0, -1.0 );coin( 115.0, -1.0 );coin( 118.0, -1.0 );coin( 121.0, 4.0 );solid_brick( 122.0, 0.0, 1.0, 1.0 );solid_brick( 123.5, 1.0, 4.0, 1.0 );walky2( 124.0, 0.0, 1.0, -5.0 );walky2( 114.0, -0.43072328, 3.8614466, -5.0 );door(125.0, 2.0, 125.0, 10.0);button( 115.0, 5.0 );teleporter( 115.0, 10.0 );teleporter( 115.0, -5.0 );coin( 107.0, -7.0 );coin( 110.0, -7.0 );coin( 113.0, -7.0 );coin( 117.0, -7.0 );coin( 120.0, -7.0 );coin( 123.0, -7.0 );coin( 126.0, -7.0 );coin( 104.0, -4.0 );coin( 104.0, -3.0 );coin( 104.0, -2.0 );coin( 104.0, -1.0 );coin( 104.0, 0.0 );coin( 104.0, 1.0 );coin( 104.0, 2.0 );coin( 104.0, 3.0 );coin( 104.0, 4.0 );coin( 104.0, 5.0 );coin( 103.0, 5.0 );coin( 103.0, 4.0 );coin( 103.0, 3.0 );coin( 103.0, 2.0 );coin( 103.0, 1.0 );coin( 103.0, 0.0 );coin( 103.0, -1.0 );coin( 103.0, -2.0 );coin( 103.0, -3.0 );coin( 103.0, -4.0 );coin( 127.0, -4.0 );coin( 127.0, -3.0 );coin( 127.0, -2.0 );coin( 127.0, -1.0 );coin( 127.0, 0.0 );coin( 127.0, 1.0 );coin( 127.0, 2.0 );coin( 127.0, 3.0 );coin( 127.0, 4.0 );coin( 128.0, 4.0 );coin( 128.0, 3.0 );coin( 128.0, 2.0 );coin( 128.0, 1.0 );coin( 128.0, 0.0 );coin( 128.0, -1.0 );coin( 128.0, -2.0 );coin( 128.0, -3.0 );coin( 128.0, -4.0 );door(140.0, 10.0, 140.0, 3.0);keyed_button(255,0,0,138.0,10.0);solid_brick( 140.0, -1.5, 1.0, 8.0 );solid_brick( 149.0, -5.0, 17.0, 1.0 );solid_brick( 157.0, 3.0, 1.0, 15.0 );solid_brick( 149.0, 3.5, 9.0, 6.0 );solid_brick( 144.0, 7.0, 1.0, 1.0 );solid_brick( 142.0, 3.0, 1.0, 1.0 );coin( 146.0, -2.0 );coin( 148.0, -2.0 );coin( 151.0, -2.0 );coin( 153.0, -2.0 );solid_brick( 149.0, -10.0, 1.0, 1.0 );teleporter( 153.0, 0.0 );teleporter( 153.0, -6.0 );teleporter( 140.0, -6.0 );teleporter( 13.0, -17.0 );solid_brick( 169.0, 7.0, 1.0, 1.0 );solid_brick( 170.0, 8.0, 1.0, 1.0 );solid_brick( 171.0, 7.0, 1.0, 1.0 );solid_brick( 169.0, 6.0, 1.0, 1.0 );solid_brick( 171.0, 6.0, 1.0, 1.0 );solid_brick( 172.0, 8.0, 1.0, 1.0 );solid_brick( 173.0, 7.0, 1.0, 1.0 );solid_brick( 173.0, 6.0, 1.0, 1.0 );solid_brick( 175.0, 6.0, 1.0, 1.0 );solid_brick( 175.0, 7.0, 1.0, 1.0 );solid_brick( 175.0, 8.0, 1.0, 1.0 );solid_brick( 175.0, 4.0, 1.0, 1.0 );solid_brick( 177.0, 8.0, 1.0, 1.0 );solid_brick( 177.0, 7.0, 1.0, 1.0 );solid_brick( 177.0, 6.0, 1.0, 1.0 );solid_brick( 178.0, 6.0, 1.0, 1.0 );solid_brick( 179.0, 7.0, 1.0, 1.0 );solid_brick( 179.0, 8.0, 1.0, 1.0 );solid_brick( 260.5, -2.0, 28.0, 25.0 );door(157.0, -6.0, 155.0, -20.0);keyed_button(0,255,0,151.0,-6.0);solid_brick( 134.0, 0.0, 1.0, 1.0 );key(0,255,0,134.0,-1.0);water( 4.0, 5.0, 1.0, 1.0 );water( 4.0, 6.0, 1.0, 1.0 );water( 4.0, 7.0, 1.0, 1.0 );water( 4.0, 8.0, 1.0, 1.0 );water( 4.0, 9.0, 1.0, 1.0 );water( 4.0, 10.0, 1.0, 1.0 );water( 3.0, 10.0, 1.0, 1.0 );water( 3.0, 9.0, 1.0, 1.0 );water( 3.0, 8.0, 1.0, 1.0 );water( 3.0, 7.0, 1.0, 1.0 );water( 3.0, 6.0, 1.0, 1.0 );water( 3.0, 5.0, 1.0, 1.0 );water( 2.0, 5.0, 1.0, 1.0 );water( 2.0, 6.0, 1.0, 1.0 );water( 2.0, 7.0, 1.0, 1.0 );water( 2.0, 8.0, 1.0, 1.0 );water( 2.0, 9.0, 1.0, 1.0 );water( 2.0, 10.0, 1.0, 1.0 );water( 1.0, 10.0, 1.0, 1.0 );water( 1.0, 9.0, 1.0, 1.0 );water( 1.0, 8.0, 1.0, 1.0 );water( 1.0, 7.0, 1.0, 1.0 );water( 1.0, 6.0, 1.0, 1.0 );water( 1.0, 5.0, 1.0, 1.0 );water( 28.0, 10.0, 1.0, 1.0 );water( 27.0, 10.0, 1.0, 1.0 );water( 26.0, 10.0, 1.0, 1.0 );water( 25.0, 10.0, 1.0, 1.0 );water( 24.0, 10.0, 1.0, 1.0 );water( 23.0, 10.0, 1.0, 1.0 );water( 22.0, 10.0, 1.0, 1.0 );water( 21.0, 10.0, 1.0, 1.0 );water( 20.0, 10.0, 1.0, 1.0 );water( 19.0, 10.0, 1.0, 1.0 );water( 19.0, 9.0, 1.0, 1.0 );water( 19.0, 8.0, 1.0, 1.0 );water( 19.0, 7.0, 1.0, 1.0 );water( 19.0, 6.0, 1.0, 1.0 );water( 18.0, 5.0, 1.0, 1.0 );water( 18.0, 6.0, 1.0, 1.0 );water( 18.0, 7.0, 1.0, 1.0 );water( 18.0, 8.0, 1.0, 1.0 );water( 18.0, 9.0, 1.0, 1.0 );water( 18.0, 10.0, 1.0, 1.0 );water( 19.0, 5.0, 1.0, 1.0 );water( 20.0, 5.0, 1.0, 1.0 );water( 21.0, 5.0, 1.0, 1.0 );water( 22.0, 5.0, 1.0, 1.0 );water( 23.0, 5.0, 1.0, 1.0 );water( 24.0, 5.0, 1.0, 1.0 );water( 25.0, 5.0, 1.0, 1.0 );water( 26.0, 5.0, 1.0, 1.0 );water( 27.0, 5.0, 1.0, 1.0 );water( 28.0, 5.0, 1.0, 1.0 );water( 28.0, 6.0, 1.0, 1.0 );water( 28.0, 7.0, 1.0, 1.0 );water( 28.0, 8.0, 1.0, 1.0 );water( 28.0, 9.0, 1.0, 1.0 );water( 27.0, 9.0, 1.0, 1.0 );water( 27.0, 8.0, 1.0, 1.0 );water( 27.0, 7.0, 1.0, 1.0 );water( 27.0, 6.0, 1.0, 1.0 );water( 26.0, 6.0, 1.0, 1.0 );water( 26.0, 7.0, 1.0, 1.0 );water( 26.0, 8.0, 1.0, 1.0 );water( 26.0, 9.0, 1.0, 1.0 );water( 25.0, 9.0, 1.0, 1.0 );water( 25.0, 8.0, 1.0, 1.0 );water( 25.0, 7.0, 1.0, 1.0 );water( 25.0, 6.0, 1.0, 1.0 );water( 24.0, 6.0, 1.0, 1.0 );water( 24.0, 7.0, 1.0, 1.0 );water( 24.0, 8.0, 1.0, 1.0 );water( 24.0, 9.0, 1.0, 1.0 );water( 23.0, 9.0, 1.0, 1.0 );water( 23.0, 8.0, 1.0, 1.0 );water( 23.0, 7.0, 1.0, 1.0 );water( 23.0, 6.0, 1.0, 1.0 );water( 22.0, 6.0, 1.0, 1.0 );water( 22.0, 7.0, 1.0, 1.0 );water( 22.0, 8.0, 1.0, 1.0 );water( 22.0, 9.0, 1.0, 1.0 );water( 21.0, 9.0, 1.0, 1.0 );water( 21.0, 8.0, 1.0, 1.0 );water( 21.0, 7.0, 1.0, 1.0 );water( 21.0, 6.0, 1.0, 1.0 );water( 20.0, 6.0, 1.0, 1.0 );
 water( 20.0, 7.0, 1.0, 1.0 );water( 20.0, 8.0, 1.0, 1.0 );water( 20.0, 9.0, 1.0, 1.0 );solid_brick( 17.0, 10.0, 1.0, 1.0 );solid_brick( 17.0, 9.0, 1.0, 1.0 );solid_brick( 17.0, 8.0, 1.0, 1.0 );solid_brick( 17.0, 7.0, 1.0, 1.0 );solid_brick( 5.0, 10.0, 1.0, 1.0 );solid_brick( 5.0, 9.0, 1.0, 1.0 );solid_brick( 5.0, 8.0, 1.0, 1.0 );solid_brick( 5.0, 7.0, 1.0, 1.0 );solid_brick( 5.0, 6.0, 1.0, 1.0 );solid_brick( 5.0, 5.0, 1.0, 1.0 );solid_brick( 0.0, 5.0, 1.0, 1.0 );solid_brick( 0.0, 6.0, 1.0, 1.0 );solid_brick( 0.0, 7.0, 1.0, 1.0 );solid_brick( 0.0, 8.0, 1.0, 1.0 );solid_brick( 0.0, 9.0, 1.0, 1.0 );solid_brick( 0.0, 10.0, 1.0, 1.0 );
 }
