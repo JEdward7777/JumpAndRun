@@ -241,6 +241,59 @@ abstract class Thing{
   }
 }
 
+class GravitySwitch extends Thing{
+  float timeout = 0;
+  boolean unlocked = true;
+  Loc target_gravity = new Loc(0,.3);
+  public void interact( Thing other_thing, boolean is_person ){
+    Touch touch = other_thing.how_am_I_touching( this );
+    if( is_person ){
+      if( timeout > 0 ){
+        timeout -= 1;
+        if( touch.touching )other_thing.solid_push(touch.overlap);
+      }else{
+        if( touch.touching && touch.overlap.r() > .5 ){
+          other_thing.solid_push(touch.overlap);
+          if( unlocked ){
+            timeout = 100;
+            gravity = target_gravity.copy();
+          }
+        }
+      }
+    }else{
+        if( touch.touching )other_thing.solid_push(touch.overlap);
+    } 
+  }
+  public String save(){
+    return "   gravity_switch(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + target_gravity.x + "," + target_gravity.y + ");";
+  }
+  public void take_hit(int amount){}
+  public void solid_push( Loc loc ){}
+  public void draw(){
+    fill(4, 13, 184);
+    rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
+    line(loc.x,loc.y,loc.x+target_gravity.x*40,loc.y+target_gravity.y*40);
+  }
+}
+void gravity_switch( float x, float y, float gravity_x, float gravity_y ){
+   GravitySwitch thing = new GravitySwitch();
+   thing.loc.x = x*block_size.x;
+   thing.loc.y = y*block_size.y;
+   thing.target_gravity.x = gravity_x;
+   thing.target_gravity.y = gravity_y;
+   all_things.add(thing);
+}
+GravitySwitch last_gravity_switch = null;
+void gravity_switch2( float x, float y, float gravity_x, float gravity_y ){
+   GravitySwitch thing = new GravitySwitch();
+   thing.loc.x = x*block_size.x;
+   thing.loc.y = y*block_size.y;
+   thing.target_gravity.x = gravity_x;
+   thing.target_gravity.y = gravity_y;
+   all_things.add(thing);
+   last_gravity_switch = thing;
+}
+
 abstract class PickupAble extends Thing{
   Thing carried_by = null;
   
@@ -375,6 +428,7 @@ void remove_things(){
   all_keys.clear();
   all_things.add(person);
   person.dead = false;
+  gravity = new Loc(0,.3);
 }
 
 class Person extends Thing{
@@ -392,11 +446,15 @@ class Person extends Thing{
         float go_speed = walk_speed;
         if( in_water ) go_speed *= .5;
         
-        speed.x = desired_direction.x*go_speed;
-        
-        if( person.in_water ){
+        if( abs(gravity.y) > abs(gravity.x) ){
+          speed.x = desired_direction.x*go_speed;
+          if( person.in_water )speed.y = desired_direction.y*go_speed;
+        }else{
           speed.y = desired_direction.y*go_speed;
+          if( person.in_water )speed.x = desired_direction.x*go_speed;
         }
+        
+        
           
         
         speed = speed.plus( gravity );
@@ -431,12 +489,39 @@ class Person extends Thing{
     //This is a brick telling us how much we are intersecting.
     if( push.y != 0 )if( (push.y > 0) != (speed.y > 0) ) speed.y = 0;
     if( push.x != 0 )if( (push.x > 0) != (speed.x > 0) ) speed.x = 0;
-    if( desired_direction.y < 0 && push.y < 0 ) jump();
+    if( abs(gravity.y) > abs(gravity.x) ){
+      if( gravity.y > 0 ){
+        if( desired_direction.y < 0 && push.y < 0 ) jump();
+      }else{
+        if( desired_direction.y > 0 && push.y > 0 ) jump();
+      }
+    }else{
+      if( gravity.x > 0 ){
+        if( desired_direction.x < 0 && push.x < 0 ) jump();
+      }else{
+        if( desired_direction.x > 0 && push.x > 0 ) jump();
+      }
+    }
+      
     loc = loc.plus(push);
   }
   public void jump(){
-    if( abs(person.speed.y) < .4 ){
-      person.speed.y = -jump_speed;
+    if( abs(gravity.y) > abs(gravity.x) ){
+      if( abs(person.speed.y) < .4 ){
+        if( gravity.y > 0 ){
+          person.speed.y = -jump_speed;
+        }else{
+          person.speed.y = jump_speed;
+        }
+      }
+    }else{
+      if( abs(person.speed.x) < .4 ){
+        if( gravity.x > 0 ){
+          person.speed.x = -jump_speed;
+        }else{
+          person.speed.x = jump_speed;
+        }
+      }
     }
   }
   public void set_in_water(){
@@ -480,7 +565,12 @@ void keyPressed() {
     }else if( keyCode == SHIFT ){
       person.figure_shift_action(); 
     }else if( key == 'r' ){
-      person.loc = the_start_block.loc.copy();
+      if( the_start_block != null ){
+        person.loc = the_start_block.loc.copy();
+        person.speed = new Loc(0,0);
+      }else{
+        person.loc = new Loc(0,0);
+      }
       person.dead = false;
     }else if( keyCode == UP || key == ' ' ){
       person.desired_direction.y = -1;
@@ -494,14 +584,32 @@ void keyPressed() {
   }else{
     if( keyCode == LEFT ){
       person.loc.x = (round(person.loc.x/block_size.x)-1)*block_size.x;
+      if( last_gravity_switch != null ){
+        last_gravity_switch.target_gravity = new Loc(-.3,0);
+        last_gravity_switch = null;
+      }
     }else if( keyCode == RIGHT ){
       person.loc.x = (round(person.loc.x/block_size.x)+1)*block_size.x;
+      if( last_gravity_switch != null ){
+        last_gravity_switch.target_gravity = new Loc(.3,0);
+        last_gravity_switch = null;
+      }
     }else if( keyCode == UP ){
       person.loc.y = (round(person.loc.y/block_size.y)-1)*block_size.y;
+      if( last_gravity_switch != null ){
+        last_gravity_switch.target_gravity = new Loc(0,-.3);
+        last_gravity_switch = null;
+      }
     }else if( keyCode == DOWN ){
       person.loc.y = (round(person.loc.y/block_size.y)+1)*block_size.y;
+      if( last_gravity_switch != null ){
+        last_gravity_switch.target_gravity = new Loc(0,.3);
+        last_gravity_switch = null;
+      }
     }else if( key == 'm' ){
       person.maker_mode = !person.maker_mode;
+    }else if( key == 'g' ){
+      gravity_switch2(  person.loc.x/block_size.x, person.loc.y/block_size.y, 0, .3 );
     }else if( key == 'c' ){
       coin( person.loc.x/block_size.x, person.loc.y/block_size.y );
     }else if( key == 'w' ){
@@ -1005,10 +1113,22 @@ class Bubble extends Thing{
          other_thing.interact(this,false); 
       }
       
-      if( !in_water ){
+      if( !in_water || random(100) < 1 ){
         things_to_remove.add(this);
       }else{
-        if( speed.y > -bubble_float_speed ) speed.y -= 1;
+        if( abs(gravity.y) > abs(gravity.x) ){
+          if( gravity.y > 0 ){
+            if( speed.y > -bubble_float_speed ) speed.y -= 1;
+          }else{
+            if( speed.y <  bubble_float_speed ) speed.y += 1;
+          }
+        }else{
+          if( gravity.x > 0 ){
+            if( speed.x > -bubble_float_speed ) speed.x -= 1;
+          }else{
+            if( speed.x <  bubble_float_speed ) speed.x += 1;
+          }
+        }
       }
 
       fill( 255 );
