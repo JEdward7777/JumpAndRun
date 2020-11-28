@@ -1,6 +1,5 @@
 import java.util.LinkedList;
 
-
 color blue = color( 0,0,255 );
 color red = color( 255, 0, 0 );
 
@@ -463,7 +462,7 @@ void keyReleased(){
     person.desired_direction.x = 0;
   }else if( keyCode == DOWN && person.desired_direction.y > 0 ){  
     person.desired_direction.y = 0;
-  }else if( keyCode == UP && person.desired_direction.y < 0 ){  
+  }else if( (keyCode == UP || key == ' ') && person.desired_direction.y < 0 ){  
     person.desired_direction.y = 0;
   }
 }
@@ -480,7 +479,7 @@ void keyPressed() {
     }else if( key == 'r' ){
       person.loc = the_start_block.loc.copy();
       person.dead = false;
-    }else if( keyCode == UP ){
+    }else if( keyCode == UP || key == ' ' ){
       person.desired_direction.y = -1;
     }else if( keyCode == DOWN ){
       person.desired_direction.y = 1;
