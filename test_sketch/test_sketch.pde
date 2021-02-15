@@ -8,6 +8,43 @@ color red = color( 255, 0, 0 );
 
 String[] level_codes = { "", "22222", "33333", "44444", "55555", "66666", "77777", "88888","99999" };
 
+class EscMenu extends Menu{
+  public void draw(){
+    pushStyle();
+    strokeWeight(10);
+    stroke(255, 220, 43);
+    fill(255, 249, 217, 230);
+    
+    float menu_width = 500;
+    float menu_height = 400;
+    
+    
+    rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
+    
+    textAlign(CENTER, BOTTOM);
+    
+    fill(0);
+    textSize(30);
+    text( "What do you want?\nPress Esc to continue\nPress q to quit\nPress r to restart\nPress n for the level choser.", width*.5, .5*(height-menu_height)+300 );
+    
+   
+    popStyle();
+  }
+  public void keyPressed(){
+    if( keyCode == ESC ){
+      key = 0;
+      menu = null;
+    }else if( key== 'q' ){
+      exit();
+    }else if( key== 'r' ){
+      menu = null;
+      reset();
+    }else if( key=='n' ){
+       show_start_menu();
+    }
+  }
+}
+
 class StartMenu extends Menu{
   String code = "";
   boolean wrong_code = false;
@@ -63,6 +100,9 @@ class StartMenu extends Menu{
       if( code.length() > 0 ){
         code = code.substring( 0, code.length()-1 );
       }
+    }else if( keyCode == ESC ){
+      key = 0;
+      code = "";
     }else if( key==ENTER||key==RETURN ){
       testCode();
     }else{
@@ -115,7 +155,7 @@ class MessageMenu extends Menu{
     stroke(255, 220, 43);
     fill(255, 249, 217, 230);
     
-    float menu_width = 500;
+    float menu_width = 600;
     float menu_height = 100;
     rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
     
@@ -131,6 +171,8 @@ class MessageMenu extends Menu{
     println( "keyPressed on menu with message " + message );
     menu = null;
     if( this.what_next != null ) this.what_next.do_it();
+    
+    if( keyCode == ESC ) key = 0;
   }
 }
 
@@ -436,6 +478,9 @@ class Person extends Thing{
   boolean maker_mode = false;
   boolean dead = false;
   Loc desired_direction = new Loc();
+  
+  int points = 0;
+  
   public Person(){
      loc.x = 640/2;
   }
@@ -530,6 +575,7 @@ class Person extends Thing{
   }
   public void take_hit( int hurt_amount ){
       dead=true;
+      points -= 10;
   }
   public String save(){ return ""; }
   
@@ -556,23 +602,30 @@ void keyReleased(){
   }
 }
 
+void reset(){
+    if( the_start_block != null ){
+      person.loc = the_start_block.loc.copy();
+      person.speed = new Loc(0,0);
+    }else{
+      person.loc = new Loc(0,0);
+    }
+    person.dead = false;
+}
+
 void keyPressed() {
   //println( keyCode );
   if( menu != null ){
     menu.keyPressed();
+  }else if( keyCode == ESC ){
+    key = 0;
+    menu = new EscMenu();
   }else if( !person.maker_mode ){
     if( key == 'm' ){
       person.maker_mode = !person.maker_mode;
     }else if( keyCode == SHIFT ){
       person.figure_shift_action(); 
     }else if( key == 'r' ){
-      if( the_start_block != null ){
-        person.loc = the_start_block.loc.copy();
-        person.speed = new Loc(0,0);
-      }else{
-        person.loc = new Loc(0,0);
-      }
-      person.dead = false;
+      reset();
     }else if( keyCode == UP || key == ' ' ){
       person.desired_direction.y = -1;
     }else if( keyCode == DOWN ){
@@ -750,10 +803,10 @@ class EndBlock extends Thing{
       if( touch.touching ){
         if( !activated ){
           this.activated = true;
-          show_message_menu( "You finished level " + (current_level_number+1) + ".", new DoSomething(){ public void do_it(){
+          show_message_menu( "You finished level " + (current_level_number+1) + " with " + person.points + " points.", new DoSomething(){ public void do_it(){
             if( current_level_number + 1 == level_codes.length ){
               println( "option 1" );
-              show_message_menu( "You finished all the levels!!", new DoSomething(){ public void do_it(){ show_start_menu(); } });
+              show_message_menu( "You finished all the levels!!  Your score is " + person.points, new DoSomething(){ public void do_it(){ show_start_menu(); } });
             }else{
               println( "option 2 current_level_number is " + current_level_number );
               show_message_menu( "The code for level " + (current_level_number+2) + " is " + level_codes[current_level_number+1], new DoSomething(){ public void do_it(){
@@ -974,6 +1027,7 @@ class Coin extends Thing{
     Touch touch = other_thing.how_am_I_touching( this );
     if( touch.touching && is_person ){
       things_to_remove.add(this);
+      person.points += 5;
     }
   }
   public void solid_push( Loc loc ){
@@ -1064,6 +1118,7 @@ abstract class Badguy extends Thing{
   }
   public void take_hit( int hurt_amount ){
     things_to_remove.add(this);
+    person.points += 1;
   }
   public void solid_push( Loc push ){
     //This is a brick telling us how much we are intersecting.
@@ -1334,6 +1389,10 @@ class BouncyBadguy extends Badguy{
     }
     popStyle();
   }
+  public void take_hit( int hurt_amount ){
+    things_to_remove.add(this);
+    person.points += 2;
+  }
   
   public void solid_push( Loc push ){
     //This is a brick telling us how much we are intersecting.
@@ -1447,7 +1506,36 @@ void draw() {
   
   popMatrix();
   
+  //Draw points.
+  
+  pushStyle();
+  
+  textSize(250);
+  fill( 255, 255, 3 );
+  text( person.points, 100, 200 );
+  
+  popStyle();
+
+  if( person.dead ){
+    pushStyle();
+    strokeWeight(10);
+    stroke(255, 220, 43);
+    fill(255, 249, 217, 230);
+    
+    float menu_width = 600;
+    float menu_height = 100;
+    rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
+    
+    textAlign(CENTER, BOTTOM);
+    
+    fill(0);
+    textSize(30);
+    text( "You had a sad.  Press r.", width*.5, .5*(height-menu_height)+50 );
+    popStyle();
+  }
+  
   if( menu != null ) menu.draw();
+ 
 } 
 
 abstract class Menu{
