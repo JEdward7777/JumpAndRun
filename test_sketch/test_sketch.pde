@@ -1,8 +1,7 @@
 import java.util.LinkedList;
 
 import java.io.File;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
+import javax.sound.sampled.*;
 
 color blue = color( 0,0,255 );
 color red = color( 255, 0, 0 );
@@ -1031,7 +1030,8 @@ class Coin extends Thing{
     if( touch.touching && is_person ){
       things_to_remove.add(this);
       person.points += 5;
-      //coin_sound.play();
+      coin_sound.setFramePosition(0);
+      coin_sound.start();
     }
   }
   public void solid_push( Loc loc ){
@@ -1464,6 +1464,7 @@ void person_init( float x, float y ){
 // The statements in the setup() function 
 // run once when the program begins
 //MediaPlayer coin_sound;
+Clip coin_sound;
 void setup() {
   fullScreen();
   //size(809, 500);  // Size should be the first statement
@@ -1480,6 +1481,13 @@ void setup() {
   
   //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   //coin_sound = new MediaPlayer(hit);
+  try{
+    coin_sound = AudioSystem.getClip();
+    coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
+  }catch( Exception exc ){
+    
+    exc.printStackTrace(System.out);
+  }
 }
 
 // The statements in draw() are run until the 
