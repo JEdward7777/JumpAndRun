@@ -215,9 +215,17 @@ class Loc{
     return sqrt( x*x+y*y );  
   }
   
+  public float angle(){
+     return atan2(y,x); 
+  }
+  
   public String toString(){
     return "(" + x + "," + y + ")";
   }
+}
+
+Loc polar_loc( float r, float angle ){
+  return new Loc( r*cos(angle), r*sin(angle) ); 
 }
 
 Loc block_size = new Loc(50,50);
@@ -670,6 +678,8 @@ void keyPressed() {
        walky( person.loc.x/block_size.x, person.loc.y/block_size.y, -5 );
     }else if( key == 'o' ){
       bouncy( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -5 );
+    }else if( key == 'l' ){
+      loopy( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -.2, .7 );
     }else if( key == 'p' ){
       spike( person.loc.x/block_size.x, person.loc.y/block_size.y, .7, 1 );
     }else if( key == 'f' ){
@@ -1415,6 +1425,93 @@ void bouncy( float x, float y, float size, float x_speed ){
    bob.size.x = size*block_size.x;
    bob.size.y = size*block_size.y;
    bob.speed.x = x_speed;
+   //println( "bob is at " + bob.loc );
+   all_things.add(bob);
+   last_growable = bob;
+}
+
+class LoopyBadguy extends Badguy{
+  float angle_speed = .2;
+  float forward_speed = 1;
+  
+  Loc behind_point = new Loc();
+  
+  public void draw(){
+    if( !person.maker_mode ){
+    
+      
+      //Pull the behind_point to one size away
+      Loc self_to_point = behind_point.minus(loc);
+      behind_point = self_to_point.times( size.x/self_to_point.r() ).plus(loc);
+      
+      //now rotate the behind point around ourselves the opposite direction
+      self_to_point = behind_point.minus(loc);
+      behind_point = polar_loc(self_to_point.r(),self_to_point.angle()-angle_speed*.5).plus(loc);
+      
+      //push the loopy away from the point by one speed and rotate around the point by some angle
+      Loc point_to_self = loc.minus(behind_point);
+      loc = polar_loc(point_to_self.r()+forward_speed,point_to_self.angle()+angle_speed).plus(behind_point);
+      
+      line( loc.x, loc.y, behind_point.x, behind_point.y );
+     
+        
+      float bottom = loc.y+.5*size.y;
+      if( bottom > floor ){
+        this.solid_push( new Loc(0,floor-bottom) );
+      }
+      
+      for( Thing other_thing : all_things ){
+         other_thing.interact(this,false); 
+      }
+      
+      //loc = loc.plus( speed ); 
+    }
+      
+    
+    fill( 29, 21, 102 );
+    ellipse(loc.x, loc.y, size.x, size.y);
+    pushStyle();
+    strokeWeight(2);
+    stroke(0);
+    if( loc.x > behind_point.x ){
+      line( loc.x-.3*size.x, loc.y-.3*size.y, loc.x-.3*size.x, loc.y-.35*size.y );
+      line( loc.x-.2*size.x, loc.y-.3*size.y, loc.x-.2*size.x, loc.y-.35*size.y );
+      line( loc.x-.28*size.x, loc.y-.2*size.y, loc.x-.25*size.x, loc.y-.1*size.y );
+      line( loc.x-.22*size.x, loc.y-.2*size.y, loc.x-.23*size.x, loc.y-.1*size.y );
+      line( loc.x-.25*size.x, loc.y-.1*size.y, loc.x-.23*size.x, loc.y-.1*size.y );
+    }else{
+      line( loc.x+.3*size.x, loc.y-.3*size.y, loc.x+.3*size.x, loc.y-.35*size.y );
+      line( loc.x+.2*size.x, loc.y-.3*size.y, loc.x+.2*size.x, loc.y-.35*size.y );
+      line( loc.x+.28*size.x, loc.y-.2*size.y, loc.x+.25*size.x, loc.y-.1*size.y );
+      line( loc.x+.22*size.x, loc.y-.2*size.y, loc.x+.23*size.x, loc.y-.1*size.y );
+      line( loc.x+.25*size.x, loc.y-.1*size.y, loc.x+.23*size.x, loc.y-.1*size.y );
+    }
+    popStyle();
+  }
+  public void take_hit( int hurt_amount ){
+    things_to_remove.add(this);
+    person.points += 2;
+  }
+  
+  public void solid_push( Loc push ){
+    //This is a brick telling us how much we are intersecting.
+    if( push.y != 0 )if( (push.y > 0) != (speed.y > 0) ) speed.y *= -1;
+    if( push.x != 0 )if( (push.x > 0) != (speed.x > 0) ) speed.x *= -1;
+    loc = loc.plus(push);
+  }
+  public String save(){
+    return "   loopy(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.angle_speed+ "," + this.forward_speed + ");";
+  }
+}
+void loopy( float x, float y, float size, float angle_speed, float forward_speed ){
+   LoopyBadguy bob = new LoopyBadguy();
+   bob.loc.x = x*block_size.x;
+   bob.loc.y = y*block_size.y;
+   bob.size.x = size*block_size.x;
+   bob.size.y = size*block_size.y;
+   bob.angle_speed = angle_speed;
+   bob.forward_speed = forward_speed;
+   bob.behind_point = bob.loc.plus( new Loc(size,0) );
    //println( "bob is at " + bob.loc );
    all_things.add(bob);
    last_growable = bob;
