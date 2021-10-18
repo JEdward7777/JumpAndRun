@@ -271,7 +271,7 @@ class SaveMenu extends Menu{
       }
     }else if( keyCode == ESC ){
       key = 0;
-      what = "";
+      menu = null;
     }else if( key==ENTER||key==RETURN ){
       trySave();
     }else{
@@ -293,10 +293,10 @@ class SaveMenu extends Menu{
     
     if( newFile.exists() ){
       show_confirm_menu( "Do you want to overwrite " + what + "?", 
-        new DoSomething(){ public void do_it(){  save_level( what ); } },
+        new DoSomething(){ public void do_it(){ show_message_menu( "Overwriting " + what, new DoSomething(){ public void do_it(){ save_level( what ); } } ); } },
         new DoSomething(){ public void do_it(){  show_save_menu();   } } );
     }else{
-      show_message_menu( "Loading " + what, new DoSomething(){ public void do_it(){ load_level( what ); } } );
+      show_message_menu( "Saving " + what, new DoSomething(){ public void do_it(){ save_level( what ); } } );
     }
   }
 }
@@ -323,7 +323,7 @@ class ConfirmMenu extends Menu{
     fill(255, 249, 217, 230);
     
     float menu_width = 500;
-    float menu_height = 400;
+    float menu_height = 100;
     
     
     rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
@@ -332,24 +332,14 @@ class ConfirmMenu extends Menu{
     
     fill(0);
     textSize(30);
-    text( this.message + "\nPress Y or N", width*.5, .5*(height-menu_height)+50 );
-    
-    //Draw box
-    fill(255);
-    Loc box_size = new Loc();
-    Loc box_pos = new Loc();
-    box_size.x = menu_width * .8;
-    box_size.y = 100;
-    box_pos.x = .5*width;
-    box_pos.y = .5*(height-menu_height)+200;
-    strokeWeight(5);
-    rect( box_pos.x-.5*box_size.x, box_pos.y-.5*box_size.y, box_size.x, box_size.y, 10 );
+    text( this.message + "\nPress Y or N", width*.5, .5*(height-menu_height)+90 );
   
    
     popStyle();
   }
   public void keyPressed(){
     if( keyCode == ESC ){
+      key = 0;
       menu = null;
     }else if( key == 'y' || key == 'Y' ){
       menu = null;
@@ -396,6 +386,9 @@ class MessageMenu extends Menu{
     popStyle();
   }
   public void keyPressed(){
+    
+    
+    
     println( "keyPressed on menu with message " + message );
     menu = null;
     if( this.what_next != null ) this.what_next.do_it();
@@ -877,14 +870,14 @@ void keyPressed() {
       if( last_gravity_switch != null ){
         last_gravity_switch.target_gravity = new Loc(-.3,0);
         last_gravity_switch = null;
-      } //<>//
+      }
     }else if( keyCode == RIGHT ){
       person.loc.x = (round(person.loc.x/block_size.x)+1)*block_size.x;
       if( last_gravity_switch != null ){
         last_gravity_switch.target_gravity = new Loc(.3,0);
         last_gravity_switch = null;
       }
-    }else if( keyCode == UP ){
+    }else if( keyCode == UP ){ //<>//
       person.loc.y = (round(person.loc.y/block_size.y)-1)*block_size.y;
       if( last_gravity_switch != null ){
         last_gravity_switch.target_gravity = new Loc(0,-.3);
@@ -1807,14 +1800,14 @@ void setup() {
   //level1();
   show_start_menu();
   
-  //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() ); //<>//
+  //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   
   //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   //coin_sound = new MediaPlayer(hit);
   try{
     coin_sound = AudioSystem.getClip();
     coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
-  }catch( Exception exc ){
+  }catch( Exception exc ){ //<>//
     
     exc.printStackTrace(System.out);
   }
@@ -2013,32 +2006,35 @@ void load_level( String filename ){
 }
 
 void save_level( String filename ){
-      String level = "";
-      int added_length = 0;
-      for( Thing thing : all_things ){
-        String thing_save = thing.save().trim();
-        added_length += thing_save.length();
-        level += thing_save;
-        if( added_length > 7000 ){
-          added_length = 0;
-          level += "\n";
-        }
+    current_level_number = -1;
+    level_name = filename;
+    
+    String level = "";
+    int added_length = 0;
+    for( Thing thing : all_things ){
+      String thing_save = thing.save().trim();
+      added_length += thing_save.length();
+      level += thing_save;
+      if( added_length > 7000 ){
+        added_length = 0;
+        level += "\n";
       }
-      println( level );
-      
-      
-      if( filename.length() == 0 ){
-        filename = "" + year() + "_" + month() + "_" + day() + "_" + hour() + " " + minute() + "_" + second() + ".lvl";
-      }
-      
-      if( !filename.endsWith( ".lvl" ) ){
-        filename = filename + ".lvl";
-      }
-      
-      PrintWriter fout = createWriter( filename );
-      fout.println( level );
-      fout.flush();
-      fout.close();
+    }
+    println( level );
+    
+    
+    if( filename.length() == 0 ){
+      filename = "" + year() + "_" + month() + "_" + day() + "_" + hour() + " " + minute() + "_" + second() + ".lvl";
+    }
+    
+    if( !filename.endsWith( ".lvl" ) ){
+      filename = filename + ".lvl";
+    }
+    
+    PrintWriter fout = createWriter( filename );
+    fout.println( level );
+    fout.flush();
+    fout.close();
 }
 
 Menu menu = null;
