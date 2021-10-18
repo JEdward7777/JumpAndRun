@@ -114,24 +114,27 @@ class StartMenu extends Menu{
     }
   }
   void testCode(){
+    if( code.equals( "load" ) ){
+      show_load_menu();
+    }else{
+    
     if( code.startsWith( "m" ) ){
-      person.maker_mode = true;
-      code = code.substring(1);
-    }
-    
-    if( code.equals( "n" ) ) show_message_menu( "Starting new level", new DoSomething(){ public void do_it(){ start_level(-1); } } );
-    
-    boolean wrong_code = true;
-    
-    for( int i = 0; i < level_codes.length && wrong_code; ++i ){
-      if( code.equals( level_codes[i] ) ){
-        wrong_code = false;
-        final int final_i = i;
-        show_message_menu( "Starting level " + (i+1), new DoSomething(){ public void do_it(){ start_level(final_i); } } );
+        person.maker_mode = true;
+        code = code.substring(1);
+      }
+      
+      if( code.equals( "n" ) ) show_message_menu( "Starting new level", new DoSomething(){ public void do_it(){ start_level(-1); } } );
+      
+      boolean wrong_code = true;
+      
+      for( int i = 0; i < level_codes.length && wrong_code; ++i ){
+        if( code.equals( level_codes[i] ) ){
+          wrong_code = false;
+          final int final_i = i;
+          show_message_menu( "Starting level " + (i+1), new DoSomething(){ public void do_it(){ start_level(final_i); } } );
+        }
       }
     }
-    
-    
   }
 }
 void show_start_menu(){
@@ -218,6 +221,147 @@ class LoadMenu extends Menu{
 }
 void show_load_menu(){
   menu = new LoadMenu(); 
+}
+
+class SaveMenu extends Menu{
+  String what = level_name;
+  
+  public void draw(){
+    pushStyle();
+    strokeWeight(10);
+    stroke(255, 220, 43);
+    fill(255, 249, 217, 230);
+    
+    float menu_width = 500;
+    float menu_height = 400;
+    
+    
+    rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
+    
+    textAlign(CENTER, BOTTOM);
+    
+    fill(0);
+    textSize(30);
+    text( "Type name to save as", width*.5, .5*(height-menu_height)+50 );
+    
+    //Draw box
+    fill(255);
+    Loc box_size = new Loc();
+    Loc box_pos = new Loc();
+    box_size.x = menu_width * .8;
+    box_size.y = 100;
+    box_pos.x = .5*width;
+    box_pos.y = .5*(height-menu_height)+200;
+    strokeWeight(5);
+    rect( box_pos.x-.5*box_size.x, box_pos.y-.5*box_size.y, box_size.x, box_size.y, 10 );
+    
+    //now draw the code which is being typed
+    fill(0);
+    textSize(100);
+    textAlign(LEFT, CENTER);
+    text( what, box_pos.x-.5*box_size.x + 5, box_pos.y );
+    
+    
+    popStyle();
+  }
+  public void keyPressed(){
+    if( keyCode == BACKSPACE ){
+      if( what.length() > 0 ){
+        what = what.substring( 0, what.length()-1 );
+      }
+    }else if( keyCode == ESC ){
+      key = 0;
+      what = "";
+    }else if( key==ENTER||key==RETURN ){
+      trySave();
+    }else{
+      what = what + key;
+    }
+  }
+  void trySave(){
+    
+    String filename = what;
+    if( !filename.endsWith( ".lvl" ) ){
+      filename += ".lvl";
+    }
+    
+    File newFile = new File(sketchPath(),filename);
+   
+    
+    println( "Checking if found " + newFile.getAbsoluteFile() );
+  
+    
+    if( newFile.exists() ){
+      show_confirm_menu( "Do you want to overwrite " + what + "?", 
+        new DoSomething(){ public void do_it(){  save_level( what ); } },
+        new DoSomething(){ public void do_it(){  show_save_menu();   } } );
+    }else{
+      show_message_menu( "Loading " + what, new DoSomething(){ public void do_it(){ load_level( what ); } } );
+    }
+  }
+}
+void show_save_menu(){
+  menu = new SaveMenu(); 
+}
+
+class ConfirmMenu extends Menu{
+  String message = null;
+  DoSomething yesDo = null;
+  DoSomething noDo = null;
+  
+  public ConfirmMenu( String message, DoSomething yesDo, DoSomething noDo ){
+    this.message = message;
+     this.yesDo = yesDo;
+     this.noDo = noDo;
+  }
+  
+  
+  public void draw(){
+    pushStyle();
+    strokeWeight(10);
+    stroke(255, 220, 43);
+    fill(255, 249, 217, 230);
+    
+    float menu_width = 500;
+    float menu_height = 400;
+    
+    
+    rect( .5*(width-menu_width), .5*(height-menu_height), menu_width, menu_height, 20);
+    
+    textAlign(CENTER, BOTTOM);
+    
+    fill(0);
+    textSize(30);
+    text( this.message + "\nPress Y or N", width*.5, .5*(height-menu_height)+50 );
+    
+    //Draw box
+    fill(255);
+    Loc box_size = new Loc();
+    Loc box_pos = new Loc();
+    box_size.x = menu_width * .8;
+    box_size.y = 100;
+    box_pos.x = .5*width;
+    box_pos.y = .5*(height-menu_height)+200;
+    strokeWeight(5);
+    rect( box_pos.x-.5*box_size.x, box_pos.y-.5*box_size.y, box_size.x, box_size.y, 10 );
+  
+   
+    popStyle();
+  }
+  public void keyPressed(){
+    if( keyCode == ESC ){
+      menu = null;
+    }else if( key == 'y' || key == 'Y' ){
+      menu = null;
+      yesDo.do_it();
+    }else if( key == 'n' || key == 'N' ){
+      menu = null;
+      noDo.do_it();
+    }
+  }
+}
+void show_confirm_menu( String message, DoSomething yesDo, DoSomething noDo ){
+  menu = new ConfirmMenu( message, yesDo, noDo ); 
 }
 
 
@@ -733,7 +877,7 @@ void keyPressed() {
       if( last_gravity_switch != null ){
         last_gravity_switch.target_gravity = new Loc(-.3,0);
         last_gravity_switch = null;
-      }
+      } //<>//
     }else if( keyCode == RIGHT ){
       person.loc.x = (round(person.loc.x/block_size.x)+1)*block_size.x;
       if( last_gravity_switch != null ){
@@ -799,25 +943,26 @@ void keyPressed() {
     }else if( key == '7' ){
       keyed_button(  0, 0, 255, person.loc.x/block_size.x, person.loc.y/block_size.y );
     }else if( key == 's' ){
-      String level = "";
-      int added_length = 0;
-      for( Thing thing : all_things ){
-        String thing_save = thing.save().trim();
-        added_length += thing_save.length();
-        level += thing_save;
-        if( added_length > 7000 ){
-          added_length = 0;
-          level += "\n";
-        }
-      }
-      println( level );
+      show_save_menu();
+      //String level = "";
+      //int added_length = 0;
+      //for( Thing thing : all_things ){
+      //  String thing_save = thing.save().trim();
+      //  added_length += thing_save.length();
+      //  level += thing_save;
+      //  if( added_length > 7000 ){
+      //    added_length = 0;
+      //    level += "\n";
+      //  }
+      //}
+      //println( level );
       
       
       
-      PrintWriter fout = createWriter( "" + year() + "_" + month() + "_" + day() + "_" + hour() + " " + minute() + "_" + second() + ".txt" );
-      fout.println( level );
-      fout.flush();
-      fout.close();
+      //PrintWriter fout = createWriter( "" + year() + "_" + month() + "_" + day() + "_" + hour() + " " + minute() + "_" + second() + ".txt" );
+      //fout.println( level );
+      //fout.flush();
+      //fout.close();
     }else if( key == 'd' ){
       for( Thing thing : all_things ){
         Touch t = person.how_am_I_touching( thing ); 
@@ -898,8 +1043,11 @@ class EndBlock extends Thing{
       if( touch.touching ){
         if( !activated ){
           this.activated = true;
-          show_message_menu( "You finished level " + (current_level_number+1) + " with " + person.points + " points.", new DoSomething(){ public void do_it(){
-            if( current_level_number + 1 == level_codes.length ){
+          show_message_menu( "You finished level " + level_name + " with " + person.points + " points.", new DoSomething(){ public void do_it(){
+            //loaded levels are -1 and they don't have a next level.
+            if( current_level_number == -1 ){
+              //after showing that they are done, don't do something just in case they still want to save.
+            }else if( current_level_number + 1 == level_codes.length ){
               println( "option 1" );
               show_message_menu( "You finished all the levels!!  Your score is " + person.points, new DoSomething(){ public void do_it(){ show_start_menu(); } });
             }else{
@@ -1659,7 +1807,7 @@ void setup() {
   //level1();
   show_start_menu();
   
-  //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
+  //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() ); //<>//
   
   //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   //coin_sound = new MediaPlayer(hit);
@@ -1745,7 +1893,8 @@ abstract class Menu{
 
 
 void load_level( String filename ){
-  current_level_number = 9999;
+  current_level_number = -1; //this marks it as a custom.
+  level_name = filename;
   remove_things();
   
   BufferedReader in = null;
@@ -1758,56 +1907,90 @@ void load_level( String filename ){
       println( "processing line \"" + line + "\"" );
       
       int index = 0;
-      String method_name = "";
       
-      //first get to it.
-      while( line.charAt(index) == ' ' ) index++;
-      
-      //now get method_name
-      while( line.charAt(index) != '(' && line.charAt(index) != ' ' ){
-        method_name = method_name + line.charAt(index); 
-        index++;
-      }
-      
-      //Make sure we are at the (
-      while( line.charAt(index) != '(' ) index++;
-      index++;
-      
-      //now get all the args.
-      LinkedList< String > args = new LinkedList< String >();
-      boolean done_with_args = false;
-      while( !done_with_args ){
-        String arg = "";
-        while( line.charAt(index) == ' ' ) index++;
-        while( line.charAt(index) != ',' && line.charAt(index) != ')' && line.charAt(index ) != ' ' ){
-          arg = arg + line.charAt(index);
+      while( index < line.length() ){
+        String method_name = "";
+        
+        //first get to it.
+        while( index < line.length() && line.charAt(index) == ' ' ) index++;
+        
+        //now get method_name
+        while( line.charAt(index) != '(' && line.charAt(index) != ' ' ){
+          method_name = method_name + line.charAt(index); 
           index++;
         }
-        while( line.charAt(index) == ' ' ) index++;
-        if( line.charAt(index) == ')' )done_with_args = true;
+        
+        //Make sure we are at the (
+        while( line.charAt(index) != '(' ) index++;
         index++;
-        while( line.charAt(index) == ' ' ) index++;
-        args.add( arg );
+        
+        //now get all the args.
+        LinkedList< String > args = new LinkedList< String >();
+        boolean done_with_args = false;
+        while( !done_with_args ){
+          String arg = "";
+          while( line.charAt(index) == ' ' ) index++;
+          while( line.charAt(index) != ',' && line.charAt(index) != ')' && line.charAt(index ) != ' ' ){
+            arg = arg + line.charAt(index);
+            index++;
+          }
+          while( line.charAt(index) == ' ' ) index++;
+          if( line.charAt(index) == ')' )done_with_args = true;
+          index++;
+          while( line.charAt(index) == ' ' ) index++;
+          args.add( arg );
+        }
+        if( line.charAt(index) == ';' ) index++;
+        
+        if( args.size() > 4 ){
+          println( "More then four" );
+        }
+        for( String arg: args ){
+          if( arg.length() > 20 ){
+            println( "Log arg " + arg );
+          }
+        }
+        
+        println( "args is " + args );
+        if( method_name.equals( "invisible_brick" ) ){ //4
+          invisible_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) ); //<>//
+        }else if( method_name.equals( "coin" ) ){ //2f
+          coin( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
+        }else if( method_name.equals( "walky2" ) ){ //4f
+          walky2( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) ); //<>//
+        }else if( method_name.equals( "solid_brick" ) ){ //4f
+          solid_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) ); //<>//
+        }else if( method_name.equals( "start_block" ) ){ //2f
+          start_block( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) ); //<>//
+        }else if( method_name.equals( "water" ) ){ //4f
+          water( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) ); //<>//
+        }else if( method_name.equals( "teleporter" ) ){ //2f
+          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
+        }else if( method_name.equals( "key" ) ){ //3i 2f
+          key( Integer.parseInt( args.get(0) ), Integer.parseInt( args.get(1) ), Integer.parseInt( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
+        }else if( method_name.equals( "door" ) ){ //4f
+          door( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "button" ) ){ //2f
+          button( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
+        }else if( method_name.equals( "keyed_button" ) ){ //3i 2f
+          keyed_button( Integer.parseInt( args.get(0) ), Integer.parseInt( args.get(1) ), Integer.parseInt( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
+        }else if( method_name.equals( "end_block" ) ){ //2f
+          end_block( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
+        }else if( method_name.equals( "fish" ) ){ //4f
+          fish( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "gravity_switch" ) ){ //4f
+          gravity_switch( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "spike" ) ){ //4f
+          spike( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "bouncy" ) ){ //4f
+          bouncy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "loopy" ) ){ //5f
+          loopy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
+        }else{
+          throw new IOException( "Unknown thingy \"" + method_name + "\" with args \"" + args + "\"" ); //<>//
+        }
+        while( index < line.length() && line.charAt(index) == ' ' ) index++;
       }
-      if( line.charAt(index) == ';' ) index++;
-      
-      if( method_name.equals( "invisible_brick" ) ){
-        //void invisible_brick( float x, float y, float brick_width, float brick_height )
-        invisible_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
-      }else if( method_name.equals( "coin" ) ){ //2
-        coin( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
-      }else if( method_name.equals( "walky2" ) ){ //4
-        walky2( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
-      }else if( method_name.equals( "solid_brick" ) ){ //4
-        solid_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
-      }else if( method_name.equals( "start_block" ) ){ //2
-        start_block( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
-      }else if( method_name.equals( "water" ) ){ //4
-        water( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
-      }else{
-        throw new IOException( "Unknown thingy \"" + method_name + "\" with args \"" + args + "\"" );
-      }
-      
       
       line = in.readLine();
     }
@@ -1829,13 +2012,43 @@ void load_level( String filename ){
     
 }
 
+void save_level( String filename ){
+      String level = "";
+      int added_length = 0;
+      for( Thing thing : all_things ){
+        String thing_save = thing.save().trim();
+        added_length += thing_save.length();
+        level += thing_save;
+        if( added_length > 7000 ){
+          added_length = 0;
+          level += "\n";
+        }
+      }
+      println( level );
+      
+      
+      if( filename.length() == 0 ){
+        filename = "" + year() + "_" + month() + "_" + day() + "_" + hour() + " " + minute() + "_" + second() + ".lvl";
+      }
+      
+      if( !filename.endsWith( ".lvl" ) ){
+        filename = filename + ".lvl";
+      }
+      
+      PrintWriter fout = createWriter( filename );
+      fout.println( level );
+      fout.flush();
+      fout.close();
+}
+
 Menu menu = null;
 
-
+String level_name = "";
 int current_level_number = 0;
 //Define level
 void start_level( int level_num ){
   current_level_number = level_num;
+  level_name = "level " + (level_num+1);
   remove_things();
   
   if( -1 == level_num ){
