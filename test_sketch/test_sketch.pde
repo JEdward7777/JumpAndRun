@@ -724,9 +724,20 @@ class Person extends Thing{
         if( abs(gravity.y) > abs(gravity.x) ){
           speed.x = desired_direction.x*go_speed;
           if( person.in_water )speed.y = desired_direction.y*go_speed;
+          if( gravity.y > 0 ){
+             if( desired_direction.y >= 0 && speed.y < 0 ) speed.y = 5;
+          }else{
+             if( desired_direction.y <= 0 && speed.y > 0 ) speed.y = -5;
+          }
         }else{
           speed.y = desired_direction.y*go_speed;
           if( person.in_water )speed.x = desired_direction.x*go_speed;
+          
+          if( gravity.x > 0 ){
+             if( desired_direction.x >= 0 && speed.x < 0 ) speed.x = 5;
+          }else{
+             if( desired_direction.x <= 0 && speed.x > 0 ) speed.x = -5;
+          }
         }
         
         
