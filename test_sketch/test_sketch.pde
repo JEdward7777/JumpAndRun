@@ -816,6 +816,9 @@ class Person extends Thing{
   public void take_hit( int hurt_amount ){
       dead=true;
       points -= 10;
+      
+      sad_sound.setFramePosition(0);
+      sad_sound.start();
   }
   public String save(){ return ""; }
   
@@ -1046,6 +1049,8 @@ class EndBlock extends Thing{
       Touch touch = other_thing.how_am_I_touching( this );
       if( touch.touching ){
         if( !activated ){
+          win_sound.setFramePosition(0);
+          win_sound.start();
           this.activated = true;
           show_message_menu( "You finished level " + level_name + " with " + person.points + " points.", new DoSomething(){ public void do_it(){
             //loaded levels are -1 and they don't have a next level.
@@ -1197,6 +1202,14 @@ class Button extends Thing{
           if( unlocked ){
             timeout = 100;
             if( door != null )door.is_open = !door.is_open;
+            
+            if(door.is_open){
+              open_door_sound.setFramePosition(0);
+              open_door_sound.start();
+            }else{
+              close_door_sound.setFramePosition(0);
+              close_door_sound.start();
+            }
           }
         }
       }
@@ -1314,6 +1327,11 @@ class Teleporter extends Thing{
           other_end.timeout = 10000;
           other_thing.solid_push(touch.overlap);
           //println( "ported from " + this.loc + " to " + other_end.loc );
+          
+          if( is_person ){
+            teleporter_sound.setFramePosition(0);
+            teleporter_sound.start();
+          }
         }
       }
     }
@@ -1370,6 +1388,8 @@ abstract class Badguy extends Thing{
   public void take_hit( int hurt_amount ){
     things_to_remove.add(this);
     person.points += 1;
+    badguy_die_sound.setFramePosition(0);
+    badguy_die_sound.start();
   }
   public void solid_push( Loc push ){
     //This is a brick telling us how much we are intersecting.
@@ -1643,6 +1663,8 @@ class BouncyBadguy extends Badguy{
   public void take_hit( int hurt_amount ){
     things_to_remove.add(this);
     person.points += 2;
+    badguy_die_sound.setFramePosition(0);
+    badguy_die_sound.start();
   }
   
   public void solid_push( Loc push ){
@@ -1799,6 +1821,12 @@ void person_init( float x, float y ){
 // run once when the program begins
 //MediaPlayer coin_sound;
 Clip coin_sound;
+Clip teleporter_sound;
+Clip badguy_die_sound;
+Clip win_sound;
+Clip open_door_sound;
+Clip close_door_sound;
+Clip sad_sound;
 void setup() {
   fullScreen();
   //size(809, 500);  // Size should be the first statement
@@ -1818,7 +1846,25 @@ void setup() {
   try{
     coin_sound = AudioSystem.getClip();
     coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
-  }catch( Exception exc ){ //<>//
+    
+    teleporter_sound = AudioSystem.getClip();
+    teleporter_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/teleport.wav")));
+    
+    badguy_die_sound = AudioSystem.getClip();
+    badguy_die_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/badguy_die.wav")));
+    
+    win_sound = AudioSystem.getClip();
+    win_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/win.wav")));
+    
+    open_door_sound = AudioSystem.getClip();
+    open_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_open.wav")));
+    
+    close_door_sound = AudioSystem.getClip();
+    close_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_close.wav")));
+    
+    sad_sound = AudioSystem.getClip();
+    sad_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/sad.wav")));
+  }catch( Exception exc ){  //<>//
     
     exc.printStackTrace(System.out);
   }
