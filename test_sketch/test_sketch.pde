@@ -1398,6 +1398,8 @@ abstract class Badguy extends Thing{
     loc = loc.plus(push);
   }
   
+  
+  double MAX_SPEED = 20;
   public void draw(){
     if( !person.maker_mode ){
     
@@ -1405,6 +1407,10 @@ abstract class Badguy extends Thing{
       
       
       speed = speed.plus( gravity );
+      
+      if( speed.r() > MAX_SPEED ){
+        speed = speed.times( .7 );
+      }
       
         
       if( bottom > floor ){
