@@ -1152,6 +1152,10 @@ class WalkingBrick extends SolidBrick{
   public void draw(){
     float extra_standing_y = size.y*.25;
     float saved_size_y = size.x;
+    float foot_span = .8*size.x;
+    float foot_lift = .2*size.x;
+    float foot_lift_speed = 2;
+    float foot_forward_multiple = 4;
     
     if( !person.maker_mode ){
        
@@ -1161,6 +1165,15 @@ class WalkingBrick extends SolidBrick{
         }else{
           block_state = MOVING_UP;
           timer = 0;
+          
+          moving_foot.y = other_foot.y = loc.y + .5*size.y;
+          if( dir > 0 ){
+            moving_foot.x = loc.x + .5*foot_span;
+            other_foot.x = loc.x - .5*foot_span;
+          }else{
+            moving_foot.x = loc.x - .5*foot_span;
+            other_foot.x = loc.x + .5*foot_span;
+          }
         }
       }else if( block_state == MOVING_UP ){
         if( timer < extra_standing_y ){
@@ -1175,10 +1188,41 @@ class WalkingBrick extends SolidBrick{
       }else if( block_state == MOVING_FORWARD ){
         if( timer > 0 ){
           timer--;
+          
+          if( foot_state == RESTING ){
+            foot_state = MOVING_UP;
+          }else if( foot_state == MOVING_UP ){
+            if( moving_foot.y > loc.y+.5*size.y-foot_lift ){
+              moving_foot.y-=foot_lift_speed;
+            }else{
+              foot_state = MOVING_FORWARD;
+            }
+          }else if( foot_state == MOVING_FORWARD ){
+            if( dir > 0 ){
+              moving_foot.x += speed_x*foot_forward_multiple;
+              if( moving_foot.x > loc.x+.5*foot_span ) foot_state = MOVING_DOWN;
+            }else{
+              moving_foot.x -= speed_x*foot_forward_multiple;
+              if( moving_foot.x < loc.x-.5*foot_span ) foot_state = MOVING_DOWN;
+            }
+          }else if( foot_state == MOVING_DOWN ){
+            if( moving_foot.y < loc.y+.5*size.y ){
+              moving_foot.y+=foot_lift_speed;
+            }else{
+              Loc temp = moving_foot;
+              moving_foot = other_foot;
+              other_foot = temp;
+              foot_state = MOVING_UP;
+            }
+          }
+              
+          
         }else{
           block_state = MOVING_DOWN;
           timer = extra_standing_y;
           speed.x = 0;
+          
+          moving_foot.y = other_foot.y = loc.y + .5*size.y;
         }
         
       }else if( block_state == MOVING_DOWN ){
@@ -1188,7 +1232,8 @@ class WalkingBrick extends SolidBrick{
         }else{
           size.y = saved_size_y;
           block_state = RESTING;
-          timer = random(500);
+          //timer = random(500);
+          timer = random(100);
         }
       }
       
@@ -1210,9 +1255,20 @@ class WalkingBrick extends SolidBrick{
     }
     
     
+    pushStyle();
+    
+    strokeWeight(2);
+    stroke(0);
+    line( moving_foot.x, moving_foot.y, max(loc.x-.5*size.x,min(loc.x+.5*size.x,moving_foot.x)), loc.y );
+    line( other_foot.x, other_foot.y, max(loc.x-.5*size.x,min(loc.x+.5*size.x,other_foot.x)), loc.y );
+    popStyle();
+    
     fill( red );
     float body_y = loc.y-.5*size.y+.5*saved_size_y;
     rect(loc.x-.5*size.x, body_y-.5*saved_size_y, size.x, saved_size_y, 7);
+    
+    
+    
     
     
     print( "state is " + block_state + " timer is " + timer + "\n" );
@@ -1985,7 +2041,7 @@ void setup() {
   //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   
   //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
-  //coin_sound = new MediaPlayer(hit);
+  //coin_sound = new MediaPlayer(hit); //<>//
   try{
     coin_sound = AudioSystem.getClip();
     coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
@@ -2041,7 +2097,7 @@ void draw() {
   }
   for( Thing thing : things_to_remove ){
     all_things.remove(thing);
-  } //<>//
+  }
   all_things.addAll( things_to_add );
   things_to_add.clear();
   
@@ -2124,17 +2180,17 @@ void load_level( String filename ){
           String arg = "";
           while( line.charAt(index) == ' ' ) index++;
           while( line.charAt(index) != ',' && line.charAt(index) != ')' && line.charAt(index ) != ' ' ){
-            arg = arg + line.charAt(index);
+            arg = arg + line.charAt(index); //<>//
             index++;
           }
           while( line.charAt(index) == ' ' ) index++;
-          if( line.charAt(index) == ')' )done_with_args = true;
+          if( line.charAt(index) == ')' )done_with_args = true; //<>//
           index++;
-          while( line.charAt(index) == ' ' ) index++;
+          while( line.charAt(index) == ' ' ) index++; //<>//
           args.add( arg );
-        }
+        } //<>//
         if( line.charAt(index) == ';' ) index++;
-        
+         //<>//
         if( args.size() > 4 ){
           println( "More then four" );
         }
@@ -2158,7 +2214,7 @@ void load_level( String filename ){
         }else if( method_name.equals( "water" ) ){ //4f
           water( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "teleporter" ) ){ //2f
-          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
+          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) ); //<>//
         }else if( method_name.equals( "key" ) ){ //3i 2f
           key( Integer.parseInt( args.get(0) ), Integer.parseInt( args.get(1) ), Integer.parseInt( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
         }else if( method_name.equals( "door" ) ){ //4f
@@ -2180,17 +2236,17 @@ void load_level( String filename ){
         }else if( method_name.equals( "loopy" ) ){ //5f
           loopy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
         }else{
-          throw new IOException( "Unknown thingy \"" + method_name + "\" with args \"" + args + "\"" ); //<>//
+          throw new IOException( "Unknown thingy \"" + method_name + "\" with args \"" + args + "\"" );
         }
         while( index < line.length() && line.charAt(index) == ' ' ) index++;
       }
-       //<>//
+      
       line = in.readLine();
-    } //<>//
+    }
     println( "Done processing lines" );
-     //<>//
     
-  }catch( java.io.FileNotFoundException ex ){ //<>//
+    
+  }catch( java.io.FileNotFoundException ex ){
     show_message_menu( "Couldn't find the file " + filename , new DoSomething(){ public void do_it(){ start_level(-1); } } );
   }catch( java.io.IOException ex ){
     show_message_menu( "IOException " + ex , new DoSomething(){ public void do_it(){ start_level(-1); } } );
@@ -2214,7 +2270,7 @@ void save_level( String filename ){
     for( Thing thing : all_things ){
       String thing_save = thing.save().trim();
       added_length += thing_save.length();
-      level += thing_save; //<>//
+      level += thing_save;
       if( added_length > 7000 ){
         added_length = 0;
         level += "\n";
