@@ -1167,13 +1167,13 @@ class WalkingBrick extends SolidBrick{
           timer = 0;
           
           moving_foot.y = other_foot.y = loc.y + .5*size.y;
-          if( dir > 0 ){
-            moving_foot.x = loc.x + .5*foot_span;
-            other_foot.x = loc.x - .5*foot_span;
-          }else{
-            moving_foot.x = loc.x - .5*foot_span;
-            other_foot.x = loc.x + .5*foot_span;
-          }
+          //if( dir > 0 ){
+          //  moving_foot.x = loc.x + .5*foot_span;
+          //  other_foot.x = loc.x - .5*foot_span;
+          //}else{
+          //  moving_foot.x = loc.x - .5*foot_span;
+          //  other_foot.x = loc.x + .5*foot_span;
+          //}
         }
       }else if( block_state == MOVING_UP ){
         if( timer < extra_standing_y ){
@@ -1216,7 +1216,6 @@ class WalkingBrick extends SolidBrick{
             }
           }
               
-          
         }else{
           block_state = MOVING_DOWN;
           timer = extra_standing_y;
@@ -1232,8 +1231,8 @@ class WalkingBrick extends SolidBrick{
         }else{
           size.y = saved_size_y;
           block_state = RESTING;
-          //timer = random(500);
-          timer = random(100);
+          timer = random(500);
+          //timer = random(100);
         }
       }
       
@@ -1252,6 +1251,11 @@ class WalkingBrick extends SolidBrick{
          other_thing.interact(this,false); 
       }
       
+      //pull feet to us if we are too far away.
+      if( loc.minus(moving_foot).r() > size.x*2 ) moving_foot = loc.plus(polar_loc( size.x*2, moving_foot.minus(loc).angle() ));
+      if( loc.minus(other_foot ).r() > size.x*2 ) other_foot  = loc.plus(polar_loc( size.x*2, other_foot.minus(loc ).angle() ));
+      
+      
     }
     
     
@@ -1259,8 +1263,13 @@ class WalkingBrick extends SolidBrick{
     
     strokeWeight(2);
     stroke(0);
-    line( moving_foot.x, moving_foot.y, max(loc.x-.5*size.x,min(loc.x+.5*size.x,moving_foot.x)), loc.y );
-    line( other_foot.x, other_foot.y, max(loc.x-.5*size.x,min(loc.x+.5*size.x,other_foot.x)), loc.y );
+    line( moving_foot.x, moving_foot.y-1, max(loc.x-.5*size.x,min(loc.x+.5*size.x,moving_foot.x)), loc.y );
+    line( other_foot.x, other_foot.y-1, max(loc.x-.5*size.x,min(loc.x+.5*size.x,other_foot.x)), loc.y );
+    
+    float toe_length = .13*size.x*dir;
+    line( moving_foot.x, moving_foot.y-1, moving_foot.x+toe_length, moving_foot.y-1 );
+    line( other_foot.x, other_foot.y-1, other_foot.x+toe_length, other_foot.y-1 );
+    
     popStyle();
     
     fill( red );
@@ -1282,6 +1291,9 @@ class WalkingBrick extends SolidBrick{
       //another badguy touch like a brick
       other_thing.solid_push( touch.overlap.times(.5) );
       this.solid_push( touch.overlap.times(-.5) );
+      if( is_person && block_state == MOVING_FORWARD && person.desired_direction.x == 0 ){
+        other_thing.speed.x = this.speed.x;
+      }
     }
   }
   public void solid_push( Loc push ){
@@ -1312,6 +1324,16 @@ void walking_brick( float x, float y, float brick_width, float brick_height, flo
      new_brick.speed_x = speed;
      new_brick.dir = 1;
    }
+   //if( new_brick.dir > 0 ){
+   //   new_brick.moving_foot.x = new_brick.loc.x + .5*new_brick.size.x;
+   //   new_brick.other_foot.x = new_brick.loc.x - .5*new_brick.size.x;
+   //}else{
+   //   new_brick.moving_foot.x = new_brick.loc.x - .5*new_brick.size.x;
+   //   new_brick.other_foot.x = new_brick.loc.x + .5*new_brick.size.x;
+   //}
+   new_brick.moving_foot.x = new_brick.other_foot.x = new_brick.loc.x;
+   new_brick.moving_foot.y = new_brick.other_foot.y = new_brick.loc.y+new_brick.size.y*.5;
+   
    all_things.add( new_brick );
    last_last_thing = last_thing;
    last_thing = new_brick;
