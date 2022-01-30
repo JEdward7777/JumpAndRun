@@ -1141,7 +1141,7 @@ class WalkingBrick extends SolidBrick{
   int block_state = RESTING;
   int foot_state = RESTING;
   
-  float timer = 0;
+  float timer = 500;
   
   Loc moving_foot = new Loc();
   Loc other_foot = new Loc();
@@ -1258,30 +1258,21 @@ class WalkingBrick extends SolidBrick{
       
     }
     
-    
+    //draw legs
     pushStyle();
-    
     strokeWeight(2);
     stroke(0);
     line( moving_foot.x, moving_foot.y-1, max(loc.x-.5*size.x,min(loc.x+.5*size.x,moving_foot.x)), loc.y );
     line( other_foot.x, other_foot.y-1, max(loc.x-.5*size.x,min(loc.x+.5*size.x,other_foot.x)), loc.y );
-    
     float toe_length = .13*size.x*dir;
     line( moving_foot.x, moving_foot.y-1, moving_foot.x+toe_length, moving_foot.y-1 );
     line( other_foot.x, other_foot.y-1, other_foot.x+toe_length, other_foot.y-1 );
-    
     popStyle();
     
+    //draw body
     fill( red );
     float body_y = loc.y-.5*size.y+.5*saved_size_y;
     rect(loc.x-.5*size.x, body_y-.5*saved_size_y, size.x, saved_size_y, 7);
-    
-    
-    
-    
-    
-    print( "state is " + block_state + " timer is " + timer + "\n" );
-    
   }
   
   public void interact( Thing other_thing, boolean is_person ){
@@ -1309,6 +1300,11 @@ class WalkingBrick extends SolidBrick{
     }
     loc = loc.plus(push);
   }
+  
+  
+  public String save(){
+    return "   walking_brick(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + (size.x/block_size.y) + "," + this.speed_x*this.dir + ");";
+  }
 }
 
 void walking_brick( float x, float y, float brick_width, float brick_height, float speed ){
@@ -1335,6 +1331,8 @@ void walking_brick( float x, float y, float brick_width, float brick_height, flo
    new_brick.moving_foot.y = new_brick.other_foot.y = new_brick.loc.y+new_brick.size.y*.5;
    
    all_things.add( new_brick );
+   
+   last_growable = new_brick;
    last_last_thing = last_thing;
    last_thing = new_brick;
 }
@@ -2229,6 +2227,8 @@ void load_level( String filename ){
           coin( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
         }else if( method_name.equals( "walky2" ) ){ //4f
           walky2( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "walking_brick" ) ){
+          walking_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
         }else if( method_name.equals( "solid_brick" ) ){ //4f
           solid_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "start_block" ) ){ //2f
