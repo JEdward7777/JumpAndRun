@@ -911,6 +911,8 @@ void keyPressed() {
       coin( person.loc.x/block_size.x, person.loc.y/block_size.y );
     }else if( key == 'w' ){
        walky( person.loc.x/block_size.x, person.loc.y/block_size.y, -5 );
+    }else if( key == 'k' ){
+       laser_spike( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -.8 );
     }else if( key == 'y' ){
       walking_brick( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, 1, 1 );
       print( "placed at " + person.loc.x/block_size.x + "," + person.loc.y/block_size.y );
@@ -1097,7 +1099,7 @@ class SolidBrick extends Thing{
     fill( red );
     rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
   }
-  public void interact( Thing other_thing, boolean is_person ){
+  public void interact( Thing other_thing, boolean is_person ){ //<>//
     if( other_thing == this ) return;
     Touch touch = other_thing.how_am_I_touching( this );
     if( touch.touching ){
@@ -1405,7 +1407,7 @@ class Button extends Thing{
   boolean unlocked = true;
   public void interact( Thing other_thing, boolean is_person ){
     Touch touch = other_thing.how_am_I_touching( this );
-    if( is_person ){
+    if( is_person || other_thing instanceof LaserLight ){
       if( timeout > 0 ){
         timeout -= 1;
         if( touch.touching )other_thing.solid_push(touch.overlap);
@@ -1625,6 +1627,7 @@ abstract class Badguy extends Thing{
         speed = speed.times( .7 );
       }
       
+      loc = loc.plus( speed );
         
       if( bottom > floor ){
         this.solid_push( new Loc(0,floor-bottom) );
@@ -1633,8 +1636,7 @@ abstract class Badguy extends Thing{
       for( Thing other_thing : all_things ){
          other_thing.interact(this,false); 
       }
-      
-      loc = loc.plus( speed ); 
+       
     }
     
   }
@@ -1855,6 +1857,179 @@ void walky2( float x, float y, float size, float x_speed ){
    all_things.add(bob);
    last_growable = bob;
 }
+
+class LaserLight extends Thing{
+  int timer = 0;
+  int direction = 1;
+  int count_out = 0;
+  Thing parent = null;
+  public void interact( Thing other_thing, boolean is_person ){
+    if( other_thing == this ) return;
+    //anything which touches laser light gets hit.
+     Touch touch = other_thing.how_am_I_touching( this );
+    if( touch.touching ){
+      if( other_thing != parent ){
+        other_thing.take_hit(1);
+      }
+    }
+  }
+  public String save(){
+    //laser light doesn't save.
+    return "";
+  }
+  public void take_hit(int amount){}
+  public void solid_push( Loc push ){
+    //stop propogating.
+    //count_out = 0;
+    push.y = 0;
+    loc = loc.plus(push);
+  }
+  
+  public void draw(){
+    if( !person.maker_mode ) timer--;
+    //Probably should just draw as a stick.
+    pushStyle();
+    strokeWeight(0);
+    fill( red );
+    rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y );
+    popStyle();
+    
+    if( !person.maker_mode ){  
+      
+      boolean hit_brick = false;
+      
+      for( Thing other_thing : all_things ){
+        if( other_thing != parent ){
+           other_thing.interact(this,false);
+           if( other_thing instanceof SolidBrick || other_thing instanceof Door ){
+              if( how_am_I_touching( other_thing ).touching ){
+                hit_brick = true;
+              }
+           }
+        }
+      }
+    
+      if( count_out > 0 && !hit_brick ){
+         shoot_laser( loc.plus( new Loc( direction*.5*size.x, 0 )), direction, count_out-1, null ); 
+         count_out = 0;
+      }
+      
+      if( timer <= 0 ){
+        things_to_remove.add(this);
+      }
+    }
+  }
+}
+Loc LASER_SIZE = new Loc( block_size.x, 2 );
+void shoot_laser( Loc start, int direction, int count_out, Thing parent ){
+  
+  LaserLight new_laser = new LaserLight();
+  new_laser.timer = LaserSpikeBadguy.SHOOT_TIME;
+  new_laser.direction = direction;
+  new_laser.size = LASER_SIZE;
+  new_laser.loc = start.plus( new Loc(direction*.5*new_laser.size.x, 0) );
+  new_laser.count_out = count_out;
+  new_laser.parent = parent;
+   things_to_add.add(new_laser);
+  
+}
+
+class LaserSpikeBadguy extends Badguy{
+  static final int SITTING = 0;
+  static final int CHARGING = 1;
+  static final int SHOOTING = 2;
+  static final int MOVING = 3;
+  
+  static final int MIN_SIT_TIME = 100;
+  static final int MAX_SIT_TIME = 200;
+  
+  static final int MIN_MOVE_TIME = 50;
+  static final int MAX_MOVE_TIME = 150;
+  
+  static final int CHARGE_TIME = 200;
+  static final int SHOOT_TIME = 100;
+  
+  int mode = SITTING;
+  int count_down = 0;
+  
+  float walking_speed = .8;
+  float saved_speed = 0;
+  
+  public LaserSpikeBadguy(){
+    mode = SITTING;
+    count_down = (int)random( MAX_SIT_TIME-MIN_SIT_TIME ) + MIN_SIT_TIME;
+  }
+  public void draw(){
+    if( !person.maker_mode ) count_down--;
+
+    if( mode == SITTING ){
+      fill( 181, 181, 181 );
+      
+      if( count_down <= 0 ){
+        mode = CHARGING;
+        count_down = CHARGE_TIME;
+      }
+    }else if( mode == CHARGING ){
+      int charged_color = 255;
+      fill( int( (count_down-CHARGE_TIME)/(float)(charged_color-CHARGE_TIME)*(charged_color-181)+181 ) );
+      
+      if( count_down <= 0 ){
+        mode = SHOOTING;
+        count_down = SHOOT_TIME;
+        
+        int direction = (saved_speed > 0)?1:-1;
+        
+        shoot_laser( loc.plus(new Loc(direction*(.25*size.x+1),0)), direction, 100, this );
+      }
+    }else if( mode == SHOOTING ){
+      fill( 255, 0, 0 );
+      
+      if( count_down <= 0 ){
+        mode = MOVING;
+        count_down = (int)random( MAX_MOVE_TIME-MIN_MOVE_TIME ) + MIN_MOVE_TIME;
+        
+        if( saved_speed != 0 ){
+          speed.x = saved_speed;
+        }else{
+          speed.x = walking_speed;
+        }
+      }
+    }else if( mode == MOVING ){
+      fill( 181, 181, 181 );
+      
+      if( count_down <= 0 ){
+        mode = SITTING;
+        count_down = (int)random( MAX_SIT_TIME-MIN_SIT_TIME ) + MIN_SIT_TIME;
+        
+        saved_speed = speed.x;
+        speed.x = 0;
+      }
+    }
+
+    //bookmark
+    
+    super.draw();
+    pushStyle();
+    triangle( (float)(loc.x - .5*size.x), (float)(loc.y + .5*size.y), (float)loc.x, (float)(loc.y-.5*size.y), (float)(loc.x + .5*size.x), (float)(loc.y + .5*size.y)  );
+    popStyle();
+  }
+  
+  public String save(){
+    return "   laser_spike(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+  }
+}
+void laser_spike( float x, float y, float size, float x_speed ){
+   LaserSpikeBadguy bob = new LaserSpikeBadguy();
+   bob.loc.x = x*block_size.x;
+   bob.loc.y = y*block_size.y;
+   bob.size.x = size*block_size.x;
+   bob.size.y = size*block_size.y;
+   bob.walking_speed = x_speed;
+   //println( "bob is at " + bob.loc );
+   all_things.add(bob);
+   last_growable = bob;
+}
+       
 
 class BouncyBadguy extends Badguy{
   public void draw(){
@@ -2227,6 +2402,8 @@ void load_level( String filename ){
           coin( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
         }else if( method_name.equals( "walky2" ) ){ //4f
           walky2( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
+        }else if( method_name.equals( "laser_spike" ) ){ //4f
+          laser_spike( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "walking_brick" ) ){
           walking_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
         }else if( method_name.equals( "solid_brick" ) ){ //4f
@@ -2329,6 +2506,8 @@ void start_level( int level_num ){
     //this is a blank level for making new levels
   }else if( level_num+1 == 1 ){
     walking_brick( 0, 10, 1,1, -1 );
+    laser_spike( 1, 10, 1, -.7 );
+    walky2( 2, 10, 1, -.7 );
     
     
 solid_brick( 6.0, 4.0, 10.0, 1.0 );coin( 8.0, 3.0 );solid_brick( -3.0, 10.0, 1.0, 1.0 );solid_brick( 14.0, 10.0, 1.0, 1.0 );coin( 3.0, 1.0 );coin( 6.0, 1.0 );coin( 7.0, 1.0 );coin( 8.0, 1.0 );coin( 9.0, 1.0 );solid_brick( 1.0, 3.0, 1.0, 1.0 );solid_brick( 11.0, 3.0, 1.0, 1.0 );coin( 5.0, 1.0 );coin( 4.0, 1.0 );coin( 3.0, 0.0 );coin( 4.0, 0.0 );coin( 5.0, 0.0 );coin( 6.0, 0.0 );coin( 7.0, 0.0 );coin( 8.0, 0.0 );coin( 9.0, 0.0 );coin( 3.0, 2.0 );coin( 4.0, 2.0 );coin( 5.0, 2.0 );coin( 7.0, 2.0 );coin( 8.0, 2.0 );coin( 9.0, 2.0 );coin( 10.0, 2.0 );coin( 11.0, 2.0 );coin( 11.0, 1.0 );coin( 11.0, 0.0 );coin( 10.0, -1.0 );coin( 9.0, -1.0 );coin( 8.0, -1.0 );coin( 7.0, -1.0 );coin( 6.0, -1.0 );coin( 5.0, -1.0 );coin( 4.0, -1.0 );coin( 3.0, -1.0 );coin( 2.0, 2.0 );coin( 2.0, 4.0 );coin( 2.0, 5.0 );coin( 11.0, 5.0 );coin( 11.0, 4.0 );coin( 11.0, 3.0 );coin( 2.0, 6.0 );solid_brick( -8.0, 10.0, 1.0, 1.0 );solid_brick( -8.0, 9.0, 1.0, 1.0 );solid_brick( -9.0, 10.0, 1.0, 1.0 );solid_brick( -16.0, 10.0, 1.0, 1.0 );solid_brick( -17.0, 10.0, 1.0, 1.0 );solid_brick( -18.0, 10.0, 1.0, 1.0 );solid_brick( -19.0, 10.0, 1.0, 1.0 );solid_brick( -19.0, 9.0, 1.0, 1.0 );solid_brick( -19.0, 8.0, 1.0, 1.0 );solid_brick( -19.0, 7.0, 1.0, 1.0 );solid_brick( -19.0, 6.0, 1.0, 1.0 );solid_brick( -19.0, 5.0, 1.0, 1.0 );solid_brick( -19.0, 4.0, 1.0, 1.0 );solid_brick( -19.0, 3.0, 1.0, 1.0 );solid_brick( -19.0, 2.0, 1.0, 1.0 );solid_brick( -19.0, 1.0, 1.0, 1.0 );solid_brick( -19.0, 0.0, 1.0, 1.0 );solid_brick( -19.0, -1.0, 1.0, 1.0 );solid_brick( -19.0, -2.0, 1.0, 1.0 );solid_brick( -19.0, -3.0, 1.0, 1.0 );solid_brick( -19.0, -4.0, 1.0, 1.0 );solid_brick( -19.0, -5.0, 1.0, 1.0 );solid_brick( -19.0, -6.0, 1.0, 1.0 );solid_brick( -19.0, -7.0, 1.0, 1.0 );solid_brick( -19.0, -8.0, 1.0, 1.0 );solid_brick( -19.0, -9.0, 1.0, 1.0 );solid_brick( -19.0, -10.0, 1.0, 1.0 );solid_brick( -19.0, -12.0, 1.0, 1.0 );solid_brick( -19.0, -11.0, 1.0, 1.0 );solid_brick( -18.0, -12.0, 1.0, 1.0 );solid_brick( -17.0, -12.0, 1.0, 1.0 );solid_brick( -16.0, -12.0, 1.0, 1.0 );solid_brick( -15.0, -12.0, 1.0, 1.0 );solid_brick( -14.0, -12.0, 1.0, 1.0 );solid_brick( -13.0, -12.0, 1.0, 1.0 );solid_brick( -9.0, -12.0, 1.0, 1.0 );coin( -16.0, 9.0 );coin( -17.0, 9.0 );coin( -17.0, 8.0 );coin( -18.0, 8.0 );coin( -17.0, 8.0 );coin( -16.0, 8.0 );coin( -15.0, 7.0 );coin( -16.0, 7.0 );coin( -17.0, 7.0 );coin( -18.0, 7.0 );coin( -18.0, 6.0 );coin( -17.0, 6.0 );coin( -16.0, 6.0 );coin( -15.0, 6.0 );solid_brick( -14.0, 10.0, 1.0, 1.0 );solid_brick( -15.0, 10.0, 1.0, 1.0 );solid_brick( -14.0, 9.0, 1.0, 1.0 );solid_brick( -18.0, 5.0, 1.0, 1.0 );solid_brick( -17.0, 5.0, 1.0, 1.0 );solid_brick( -16.0, 5.0, 1.0, 1.0 );solid_brick( -14.0, 5.0, 1.0, 1.0 );solid_brick( -14.0, 4.0, 1.0, 1.0 );coin( -15.0, 4.0 );coin( -16.0, 4.0 );coin( -17.0, 4.0 );solid_brick( -17.0, 1.0, 1.0, 1.0 );solid_brick( -16.0, 1.0, 1.0, 1.0 );solid_brick( -15.0, 1.0, 1.0, 1.0 );solid_brick( -14.0, 1.0, 1.0, 1.0 );solid_brick( -14.0, 0.0, 1.0, 1.0 );coin( -17.0, 0.0 );coin( -16.0, 0.0 );coin( -15.0, 0.0 );solid_brick( -18.0, -3.0, 1.0, 1.0 );solid_brick( -17.0, -3.0, 1.0, 1.0 );solid_brick( -16.0, -3.0, 1.0, 1.0 );solid_brick( -14.0, -3.0, 1.0, 1.0 );solid_brick( -14.0, -4.0, 1.0, 1.0 );coin( -18.0, -4.0 );coin( -16.0, -4.0 );coin( -15.0, -4.0 );solid_brick( -17.0, -7.0, 1.0, 1.0 );solid_brick( -16.0, -7.0, 1.0, 1.0 );solid_brick( -15.0, -7.0, 1.0, 1.0 );solid_brick( -14.0, -7.0, 1.0, 1.0 );coin( -17.0, -8.0 );coin( -16.0, -8.0 );coin( -15.0, -8.0 );coin( -15.0, -9.0 );coin( -16.0, -9.0 );coin( -17.0, -9.0 );coin( -18.0, -9.0 );coin( -18.0, -10.0 );coin( -17.0, -10.0 );coin( -16.0, -10.0 );coin( -15.0, -10.0 );coin( -15.0, -11.0 );coin( -16.0, -11.0 );coin( -17.0, -11.0 );coin( -18.0, -11.0 );coin( -14.0, -11.0 );solid_brick( -13.0, 10.0, 1.0, 1.0 );solid_brick( -1.0, -5.0, 1.0, 1.0 );solid_brick( -4.0, -10.0, 1.0, 1.0 );coin( -15.0, 8.0 );solid_brick( -11.0, 10.0, 1.0, 1.0 );solid_brick( -10.0, 10.0, 1.0, 1.0 );solid_brick( -12.0, 10.0, 1.0, 1.0 );coin( -13.0, 1.0 );coin( -12.0, 1.0 );coin( -11.0, 1.0 );coin( -12.0, -3.0 );coin( -11.0, -3.0 );coin( -13.0, -7.0 );coin( -12.0, -7.0 );coin( -11.0, -7.0 );walky2(304.8,10.0,1.0,10.0);solid_brick( 308.0, 10.0, 1.0, 1.0 );solid_brick( 308.0, 6.0, 1.0, 1.0 );solid_brick( 307.0, 6.0, 1.0, 1.0 );solid_brick( 306.0, 6.0, 1.0, 1.0 );solid_brick( 305.0, 6.0, 1.0, 1.0 );solid_brick( 304.0, 6.0, 1.0, 1.0 );solid_brick( 303.0, 6.0, 1.0, 1.0 );solid_brick( 302.0, 6.0, 1.0, 1.0 );solid_brick( 301.0, 6.0, 1.0, 1.0 );solid_brick( 301.0, 7.0, 1.0, 1.0 );solid_brick( 301.0, 8.0, 1.0, 1.0 );solid_brick( 301.0, 9.0, 1.0, 1.0 );solid_brick( 301.0, 10.0, 1.0, 1.0 );solid_brick( 302.0, 9.0, 1.0, 1.0 );solid_brick( 303.0, 9.0, 1.0, 1.0 );solid_brick( 304.0, 9.0, 1.0, 1.0 );solid_brick( 305.0, 9.0, 1.0, 1.0 );solid_brick( 308.0, 9.0, 1.0, 1.0 );solid_brick( 308.0, 8.0, 1.0, 1.0 );solid_brick( 308.0, 7.0, 1.0, 1.0 );solid_brick( 305.0, 8.0, 1.0, 1.0 );walky2(302.8,8.006,1.0,-10.0);coin( 12.0, 1.0 );coin( 12.0, 2.0 );coin( 12.0, 3.0 );coin( 12.0, 4.0 );solid_brick( 17.0, -3.0, 1.0, 1.0 );solid_brick( 16.0, -2.0, 1.0, 1.0 );solid_brick( 15.0, -2.0, 1.0, 1.0 );solid_brick( 14.0, -2.0, 1.0, 1.0 );solid_brick( 13.0, -3.0, 1.0, 1.0 );coin( 17.0, -2.0 );coin( 18.0, -3.0 );coin( 18.0, -4.0 );coin( 17.0, -4.0 );coin( 17.0, -5.0 );coin( 15.0, -6.0 );coin( 13.0, -6.0 );coin( 13.0, -5.0 );coin( 18.0, -5.0 );coin( 12.0, -5.0 );coin( 12.0, -4.0 );coin( 12.0, -3.0 );coin( 13.0, -2.0 );coin( 14.0, -1.0 );coin( 15.0, -1.0 );coin( 16.0, -1.0 );coin( 15.0, -3.0 );coin( 16.0, -3.0 );coin( 16.0, -4.0 );coin( 15.0, -4.0 );coin( 15.0, -5.0 );coin( 14.0, -4.0 );coin( 13.0, -4.0 );coin( 14.0, -3.0 );solid_brick( 1.0, 12.0, 1.0, 1.0 );solid_brick( 2.0, 12.0, 1.0, 1.0 );solid_brick( 3.0, 13.0, 1.0, 1.0 );solid_brick( 3.0, 14.0, 1.0, 1.0 );solid_brick( 2.0, 15.0, 1.0, 1.0 );solid_brick( 1.0, 15.0, 1.0, 1.0 );solid_brick( 0.0, 15.0, 1.0, 1.0 );solid_brick( 0.0, 13.0, 1.0, 1.0 );solid_brick( 0.0, 12.0, 1.0, 1.0 );solid_brick( 0.0, 14.0, 1.0, 1.0 );solid_brick( 0.0, 16.0, 1.0, 1.0 );solid_brick( 0.0, 17.0, 1.0, 1.0 );solid_brick( 0.0, 18.0, 1.0, 1.0 );solid_brick( 7.0, 18.0, 1.0, 1.0 );solid_brick( 7.0, 17.0, 1.0, 1.0 );solid_brick( 7.0, 16.0, 1.0, 1.0 );solid_brick( 0.0, 19.0, 1.0, 1.0 );solid_brick( 7.0, 19.0, 1.0, 1.0 );solid_brick( 7.0, 15.0, 1.0, 1.0 );solid_brick( 6.0, 16.0, 1.0, 1.0 );solid_brick( 5.0, 15.0, 1.0, 1.0 );solid_brick( 4.0, 16.0, 1.0, 1.0 );solid_brick( 4.0, 18.0, 1.0, 1.0 );solid_brick( 5.0, 19.0, 1.0, 1.0 );solid_brick( 6.0, 18.0, 1.0, 1.0 );solid_brick( 4.0, 17.0, 1.0, 1.0 );solid_brick( 9.0, 15.0, 1.0, 1.0 );solid_brick( 9.0, 16.0, 1.0, 1.0 );solid_brick( 9.0, 17.0, 1.0, 1.0 );solid_brick( 9.0, 18.0, 1.0, 1.0 );solid_brick( 9.0, 19.0, 1.0, 1.0 );solid_brick( 9.0, 20.0, 1.0, 1.0 );solid_brick( 9.0, 21.0, 1.0, 1.0 );solid_brick( 9.0, 22.0, 1.0, 1.0 );solid_brick( 9.0, 23.0, 1.0, 1.0 );coin( 3.0, 5.0 );coin( 4.0, 5.0 );coin( 5.0, 5.0 );coin( 6.0, 5.0 );coin( 7.0, 5.0 );
