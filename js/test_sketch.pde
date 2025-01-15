@@ -1,5 +1,5 @@
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import java.io.File;
 import javax.sound.sampled.*;
@@ -9,6 +9,9 @@ color blue = color( 0,0,255 );
 color red = color( 255, 0, 0 );
 
 String[] level_codes = { "", "22222", "33333", "44444", "55555", "66666", "77777", "88888","99999", "45324", "11111", "12121" };
+
+var audioContext;
+var sounds = {};
 
 class EscMenu extends Menu{
   public void draw(){
@@ -85,6 +88,7 @@ class StartMenu extends Menu{
     textSize(100);
     textAlign(LEFT, CENTER);
     text( code, box_pos.x-.5*box_size.x + 5, box_pos.y );
+    //text( "potato", box_pos.x-.5*box_size.x + 5, box_pos.y );
     
     //now draw wrong code text
     if( wrong_code ){
@@ -689,10 +693,10 @@ float walk_speed = 10;
 float jump_speed = 14;
 float floor = block_size.y*10.5;
 
-LinkedList< Thing > things_to_add = new LinkedList< Thing >();
-LinkedList< Thing > things_to_remove = new LinkedList< Thing >();
-LinkedList< Thing > all_things = new LinkedList< Thing >();
-LinkedList< Key >   all_keys   = new LinkedList< Key >();
+ArrayList< Thing > things_to_add = new ArrayList< Thing >();
+ArrayList< Thing > things_to_remove = new ArrayList< Thing >();
+ArrayList< Thing > all_things = new ArrayList< Thing >();
+ArrayList< Key >   all_keys   = new ArrayList< Key >();
 void remove_things(){
   things_to_add.clear();
   things_to_remove.clear();
@@ -820,6 +824,7 @@ class Person extends Thing{
       
       sad_sound.setFramePosition(0);
       sad_sound.start();
+      playSound( "sad_sound" );
   }
   public String save(){ return ""; }
   
@@ -1055,8 +1060,9 @@ class EndBlock extends Thing{
       Touch touch = other_thing.how_am_I_touching( this );
       if( touch.touching ){
         if( !activated ){
-          win_sound.setFramePosition(0);
-          win_sound.start();
+          //win_sound.setFramePosition(0);
+          //win_sound.start();
+          playSound( "win_sound" );
           this.activated = true;
           show_message_menu( "You finished level " + level_name + " with " + person.points + " points.", new DoSomething(){ public void do_it(){
             //loaded levels are -1 and they don't have a next level.
@@ -1420,11 +1426,13 @@ class Button extends Thing{
             if( door != null )door.is_open = !door.is_open;
             
             if(door.is_open){
-              open_door_sound.setFramePosition(0);
-              open_door_sound.start();
+              //open_door_sound.setFramePosition(0);
+              //open_door_sound.start();
+              playSound( "open_door_sound" );
             }else{
-              close_door_sound.setFramePosition(0);
-              close_door_sound.start();
+              //close_door_sound.setFramePosition(0);
+              //close_door_sound.start();
+              playSound( "close_door_sound" );
             }
           }
         }
@@ -1506,8 +1514,9 @@ class Coin extends Thing{
     if( touch.touching && is_person ){
       things_to_remove.add(this);
       person.points += 5;
-      coin_sound.setFramePosition(0);
-      coin_sound.start();
+      //coin_sound.setFramePosition(0);
+      //coin_sound.start();
+      playSound( "coin_sound" );
     }
   }
   public void solid_push( Loc loc ){
@@ -1545,8 +1554,9 @@ class Teleporter extends Thing{
           //println( "ported from " + this.loc + " to " + other_end.loc );
           
           if( is_person ){
-            teleporter_sound.setFramePosition(0);
-            teleporter_sound.start();
+            //teleporter_sound.setFramePosition(0);
+            //teleporter_sound.start();
+            playSound( "teleporter_sound" );
           }
         }
       }
@@ -1604,8 +1614,9 @@ abstract class Badguy extends Thing{
   public void take_hit( int hurt_amount ){
     things_to_remove.add(this);
     person.points += 1;
-    badguy_die_sound.setFramePosition(0);
-    badguy_die_sound.start();
+    //badguy_die_sound.setFramePosition(0);
+    //badguy_die_sound.start();
+    playSound( "badguy_die_sound" );
   }
   public void solid_push( Loc push ){
     //This is a brick telling us how much we are intersecting.
@@ -2058,8 +2069,9 @@ class BouncyBadguy extends Badguy{
   public void take_hit( int hurt_amount ){
     things_to_remove.add(this);
     person.points += 2;
-    badguy_die_sound.setFramePosition(0);
-    badguy_die_sound.start();
+    //badguy_die_sound.setFramePosition(0);
+    //badguy_die_sound.start();
+    playSound( "badguy_die_sound" );
   }
   
   public void solid_push( Loc push ){
@@ -2211,57 +2223,90 @@ void person_init( float x, float y ){
   person.loc.x = x*(block_size.x);
   person.loc.y = y*(block_size.y);
 }
+
+
+void loadSound(String name, String url) {
+//    fetch(url)
+//        .then(response => response.arrayBuffer())
+//        .then(data => audioContext.decodeAudioData(data, buffer => {
+//            sounds[name] = buffer // Store the decoded sound buffer
+//        }));
+}
+
+void playSound(String name) {
+//    if (sounds[name]) {
+//        var source = audioContext.createBufferSource();
+//        source.buffer = sounds[name];
+//        source.connect(audioContext.destination);
+//        source.start(0); // Play the sound immediately
+//    }
+}
  
 // The statements in the setup() function 
 // run once when the program begins
 //MediaPlayer coin_sound;
-Clip coin_sound;
-Clip teleporter_sound;
-Clip badguy_die_sound;
-Clip win_sound;
-Clip open_door_sound;
-Clip close_door_sound;
-Clip sad_sound;
+//Clip coin_sound;
+//Clip teleporter_sound;
+//Clip badguy_die_sound;
+//Clip win_sound;
+//Clip open_door_sound;
+//Clip close_door_sound;
+//Clip sad_sound;
 void setup() {
-  fullScreen();
-  //size(809, 500);  // Size should be the first statement
+  //fullScreen();
+  size(1609, 700);  // Size should be the first statement
+
+
   stroke(255);     // Set stroke color to white
   
-  surface.setResizable(true);
+  //surface.setResizable(true);
   
   person = new Person();
   all_things.add(person);
   //level1();
-  show_start_menu();
+  //show_start_menu();
+  start_level(1);
   
   //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   
   //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   //coin_sound = new MediaPlayer(hit); //<>//
   try{
-    coin_sound = AudioSystem.getClip();
-    coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
+
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    //coin_sound = AudioSystem.getClip();
+    //coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
+    loadSound( "coin_sound", "../test_sketch/data/coin.wav" );
     
-    teleporter_sound = AudioSystem.getClip();
-    teleporter_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/teleport.wav")));
+    //teleporter_sound = AudioSystem.getClip();
+    //teleporter_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/teleport.wav")));
+    loadSound( "teleporter_sound", "../test_sketch/data/teleport.wav" );
     
-    badguy_die_sound = AudioSystem.getClip();
-    badguy_die_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/badguy_die.wav")));
+    //badguy_die_sound = AudioSystem.getClip();
+    //badguy_die_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/badguy_die.wav")));
+    loadSound( "badguy_die_sound", "../test_sketch/data/badguy_die.wav")
     
-    win_sound = AudioSystem.getClip();
-    win_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/win.wav")));
+    //win_sound = AudioSystem.getClip();
+    //win_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/win.wav")));
+    loadSound( "win_sound", "../test_sketch/data/win.wav");
     
-    open_door_sound = AudioSystem.getClip();
-    open_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_open.wav")));
+    //open_door_sound = AudioSystem.getClip();
+    //open_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_open.wav")));
+    loadSound( "open_door_sound", "../test_sketch/data/door_open.wav" );
     
-    close_door_sound = AudioSystem.getClip();
-    close_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_close.wav")));
+    //close_door_sound = AudioSystem.getClip();
+    //close_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_close.wav")));
+    loadSound( "close_door_sound", "../test_sketch/data/door_close.wav" );
     
-    sad_sound = AudioSystem.getClip();
-    sad_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/sad.wav")));
+    //sad_sound = AudioSystem.getClip();
+    //sad_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/sad.wav")));
+    loadSound( "sad_sound", "../test_sketch/data/sad.wav" );
+
   }catch( Exception exc ){ 
-    
-    exc.printStackTrace(System.out);
+
+    //exc.printStackTrace(System.out);
+    console.error(exc)
   }
 }
 
@@ -2370,7 +2415,7 @@ void load_level( String filename ){
         index++;
         
         //now get all the args.
-        LinkedList< String > args = new LinkedList< String >();
+        ArrayList< String > args = new ArrayList< String >();
         boolean done_with_args = false;
         while( !done_with_args ){
           String arg = "";
