@@ -10,7 +10,7 @@ color red = color( 255, 0, 0 );
 
 String[] level_codes = { "", "22222", "33333", "44444", "55555", "66666", "77777", "88888","99999", "45324", "11111", "12121" };
 
-var audioContext;
+var audioContext = null;
 var sounds = {};
 
 class EscMenu extends Menu{
@@ -109,11 +109,11 @@ class StartMenu extends Menu{
     }else if( keyCode == ESC ){
       key = 0;
       code = "";
-    }else if( key==ENTER||key==RETURN ){
+    }else if( keyCode==ENTER||keyCode==RETURN ){
       testCode();
     }else{
       if( code.length() < 6 ){
-        code = code + key;
+        code = code + key.toString();
         code = code.trim();
       }
     }
@@ -644,7 +644,7 @@ class Key extends PickupAble{
     star( loc.x, loc.y, size.x*.25, size.x*.5, 5 );
   }
 }
-void key( int r, int g, int b, float x, float y ){
+void key_renamed( int r, int g, int b, float x, float y ){
    Key thing = new Key(r,g,b,x*block_size.x,y*block_size.y);
    all_things.add(thing);
 }
@@ -822,8 +822,8 @@ class Person extends Thing{
       dead=true;
       points -= 10;
       
-      sad_sound.setFramePosition(0);
-      sad_sound.start();
+      //sad_sound.setFramePosition(0);
+      //sad_sound.start();
       playSound( "sad_sound" );
   }
   public String save(){ return ""; }
@@ -861,7 +861,19 @@ void reset(){
     person.dead = false;
 }
 
+boolean isString(Object value) {
+    return (typeof value === "string" || value instanceof String);
+}
+
 void keyPressed() {
+  //if( !isString(key) ){
+  //  //hack for processing.js to make key be the string.
+  //  //key = String.fromCharCode(key);
+  //  key = Character(String.fromCharCode(key))
+  //}
+  
+  console.log( "root keyPressed key", key, "keyCode", keyCode );
+
   //println( keyCode );
   if( menu != null ){
     menu.keyPressed();
@@ -2226,53 +2238,15 @@ void person_init( float x, float y ){
 
 
 void loadSound(String name, String url) {
-//    fetch(url)
-//        .then(response => response.arrayBuffer())
-//        .then(data => audioContext.decodeAudioData(data, buffer => {
-//            sounds[name] = buffer // Store the decoded sound buffer
-//        }));
+    fetch(url)
+        .then(response => response.arrayBuffer())
+        .then(data => audioContext.decodeAudioData(data, buffer => {
+            sounds[name] = buffer // Store the decoded sound buffer
+        }));
 }
 
-void playSound(String name) {
-//    if (sounds[name]) {
-//        var source = audioContext.createBufferSource();
-//        source.buffer = sounds[name];
-//        source.connect(audioContext.destination);
-//        source.start(0); // Play the sound immediately
-//    }
-}
- 
-// The statements in the setup() function 
-// run once when the program begins
-//MediaPlayer coin_sound;
-//Clip coin_sound;
-//Clip teleporter_sound;
-//Clip badguy_die_sound;
-//Clip win_sound;
-//Clip open_door_sound;
-//Clip close_door_sound;
-//Clip sad_sound;
-void setup() {
-  //fullScreen();
-  size(1609, 700);  // Size should be the first statement
-
-
-  stroke(255);     // Set stroke color to white
-  
-  //surface.setResizable(true);
-  
-  person = new Person();
-  all_things.add(person);
-  //level1();
-  //show_start_menu();
-  start_level(1);
-  
-  //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
-  
-  //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
-  //coin_sound = new MediaPlayer(hit); //<>//
-  try{
-
+void loadSounds(){
+    try{
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     //coin_sound = AudioSystem.getClip();
@@ -2308,6 +2282,65 @@ void setup() {
     //exc.printStackTrace(System.out);
     console.error(exc)
   }
+}
+
+void playSound(String name) {
+  console.log( "play sound", name );
+  if( audioContext === null ){
+    loadSounds();
+  }else if (sounds[name]) {
+        var source = audioContext.createBufferSource();
+        source.buffer = sounds[name];
+        source.connect(audioContext.destination);
+        source.start(0); // Play the sound immediately
+  }
+}
+ 
+// The statements in the setup() function 
+// run once when the program begins
+//MediaPlayer coin_sound;
+//Clip coin_sound;
+//Clip teleporter_sound;
+//Clip badguy_die_sound;
+//Clip win_sound;
+//Clip open_door_sound;
+//Clip close_door_sound;
+//Clip sad_sound;
+void setup() {
+  //fullScreen();
+  size(1609, 700);  // Size should be the first statement
+
+  document.addEventListener("keydown", function(event) {
+      if (event.keyCode === 8) {
+          event.preventDefault(); // Prevent default backspace behavior
+          keyCode = BACKSPACE;
+          key = -1;
+          keyPressed();
+      }else if( event.keyCode === 27 ){
+          event.preventDefault(); // Prevent default backspace behavior
+          keyCode = ESC;
+          key = -1;
+          keyPressed();
+      }else{
+        console.log( "addEventListener", event.keyCode );
+      }
+  });
+
+
+  stroke(255);     // Set stroke color to white
+  
+  //surface.setResizable(true);
+  
+  person = new Person();
+  all_things.add(person);
+  //level1();
+  show_start_menu();
+  //start_level(1);
+  
+  //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
+  
+  //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
+  //coin_sound = new MediaPlayer(hit); //<>//
 }
 
 // The statements in draw() are run until the 
@@ -2383,6 +2416,8 @@ abstract class Menu{
 
 
 void load_level( String filename ){
+  var key = key_renamed;
+
   current_level_number = -1; //this marks it as a custom.
   level_name = filename;
   remove_things();
@@ -2547,6 +2582,8 @@ void start_level( int level_num ){
   current_level_number = level_num;
   level_name = "level " + (level_num+1);
   remove_things();
+
+  var key = key_renamed;
   
   if( -1 == level_num ){
     //this is a blank level for making new levels
