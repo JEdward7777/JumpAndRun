@@ -1,0 +1,1 @@
+invisible_brick( 3.0, 5.0, 1.0, 11.0 );invisible_brick( 14.0, 0.0, 23.0, 1.0 );invisible_brick( 25.0, 5.0, 1.0, 11.0 );end_block(4.0,10.0);end_block(4.0,9.0);end_block(24.0,10.0);end_block(24.0,9.0);start_block(17.0,10.0);walking_brick(17.0,10.0,3.3749948E-4,3.3749948E-4,1.0);

@@ -1,0 +1,57 @@
+01/14/2025
+I am trying to port this to processing.js
+I went ahead and made a copy of the file.  It is hard enough to try to make it work to also think about not breaking the Java version.  I am thinking best case I will have a patch that I apply to make it the web version and the development can happen on the Java version.
+
+I got it to the point where I could get it to go to level one but with no sound.  I have a sound system in place which ChatGPT constructed but I need to make it operate according to the "don't load sound before user clicks" rule.  I also haven't gotten the menus to work.  I have to skip to the first level.  Some reason the key that is supposed to be concatinated on comes out as a function.  So I think I might need to pass the key value into the sub functions as an argument.  However however the man moving works so I will have to look into that.
+
+01/15/2025
+I figured out the key problem.  In Javascript apparently vars and functions are in the same namespace and the key function which is used to create a key overrides the key which is pressed for movement.  The problem is that both sides of this conflict are a protocol.  The key is the function which is called to create a key.  If I change it, then I won't be able to copy levels which have keys in it in unmodifed.  I know.  I can change it and then provide an alias to it closer in scope to where it is needed.
+Ok. We are getting closer but now we are getting keycodes instead of the actual key.
+I now have an issue that the backspace key doesn't seem to be captured.
+I figure I will need to hook the key myself in a Javascript sort of way.
+
+That worked.  Now I need to do the same for ESC.
+
+01/16/2025
+It is suddenly loading a level.  I don't know what I changed.  Something strange is that when a menu is open all the boundaries become thicker.
+
+You can start level 1 now.  However when you die everything goes away.
+Also you can't enter into edit mode.
+I suppose I will start making a list of things that should be fixed so that I don't have to remember.
+
+So the way todo will work in here is that as I do things I will move them above the todo and they will become part of the thinking document.  Otherwise they will stay at the end of the thinking document.
+
+So I sorted them and the main thing I need to fix right now is that when you die everything goes away.
+
+[x] When you die everything goes away.
+
+I had a reference to the sad_sound clip.  Now the You had a sad.  Press r. menu  will not go away when I press r.
+
+[x] You can't press r after you die.
+
+It was a weird error where Java chars become a special Character class, so my key hack needed to be wrapped further.   Huh.... I wonder if key was allready a Char...  It was.  So now I need to figure out how to concatinate a char onto a string.
+
+[x] You can't get into edit mode.
+
+So now I want to get sound working.
+Got it working.
+
+[x] sound doesn't work
+
+Now going to make the sketch full screen.  I mean full window.
+
+[x] sketch isn't fullscreen.
+
+Now full screen works.
+
+---todo.
+
+[ ] Make it so that when you save, it downloads the file.
+
+[ ] Make it so that when you go to load it offers for you to upload a file.
+
+[ ] lines get thicker when you are in menues.
+
+
+
+
