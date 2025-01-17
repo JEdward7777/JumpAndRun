@@ -5,9 +5,34 @@
     
     <!-- Load the Processing.js library -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.6.0/processing.min.js"></script>
+    
+    <!-- Add CSS to make canvas full-screen -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      canvas {
+        width: 100%;
+        height: 100vh;
+        display: block;
+      }
+    </style>
 	</head>
 	<body>
 		<script type="application/processing" src="./test_sketch.pde"></script>
 		<canvas> </canvas>
+    
+    <!-- Add JavaScript to update canvas size on window resize -->
+    <script>
+      // function resizeCanvas() {
+      //   var canvas = document.querySelector('canvas');
+      //   canvas.width = window.innerWidth;
+      //   canvas.height = window.innerHeight;
+      // }
+      // window.addEventListener('resize', resizeCanvas);
+      // resizeCanvas(); // Call once to set initial size
+    </script>
 	</body>
 </html>

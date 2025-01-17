@@ -394,7 +394,7 @@ class MessageMenu extends Menu{
     
     
     
-    println( "keyPressed on menu with message " + message );
+    //println( "keyPressed on menu with message " + message );
     menu = null;
     if( this.what_next != null ) this.what_next.do_it();
     
@@ -404,7 +404,7 @@ class MessageMenu extends Menu{
 
 void show_message_menu( String message, DoSomething ds ){
   menu = new MessageMenu( message, ds );
-  println( "menu changed to one with message " + message );
+  //println( "menu changed to one with message " + message );
 }
 
 class Loc{
@@ -835,7 +835,7 @@ class Person extends Thing{
         thing.do_shift_action(this);
       }
     }
-    println( "In figure_shift_action" );
+    //println( "In figure_shift_action" );
   }
 }
 
@@ -1025,7 +1025,7 @@ void keyPressed() {
     }else if( key == '=' ){
       show_load_menu();
     }else{
-      println( "key == '" + key + "'" );
+      //println( "key == '" + key + "'" );
     }
   }
 }
@@ -1081,10 +1081,10 @@ class EndBlock extends Thing{
             if( current_level_number == -1 ){
               //after showing that they are done, don't do something just in case they still want to save.
             }else if( current_level_number + 1 == level_codes.length ){
-              println( "option 1" );
+              //println( "option 1" );
               show_message_menu( "You finished all the levels!!  Your score is " + person.points, new DoSomething(){ public void do_it(){ show_start_menu(); } });
             }else{
-              println( "option 2 current_level_number is " + current_level_number );
+              //println( "option 2 current_level_number is " + current_level_number );
               show_message_menu( "The code for level " + (current_level_number+2) + " is " + level_codes[current_level_number+1], new DoSomething(){ public void do_it(){
                 show_message_menu( "Starting level " + (current_level_number+2) + "!", new DoSomething(){ public void do_it(){
                   start_level( current_level_number+1 );
@@ -2429,7 +2429,7 @@ void load_level( String filename ){
     String line = br_in.readLine();
     
     while( line != null ){
-      println( "processing line \"" + line + "\"" );
+      //println( "processing line \"" + line + "\"" );
       
       int index = 0;
       
@@ -2468,15 +2468,15 @@ void load_level( String filename ){
         if( line.charAt(index) == ';' ) index++;
          //<>//
         if( args.size() > 4 ){
-          println( "More then four" );
+          //println( "More then four" );
         }
         for( String arg: args ){
           if( arg.length() > 20 ){
-            println( "Log arg " + arg );
+            //println( "Log arg " + arg );
           }
         }
         
-        println( "args is " + args );
+        //println( "args is " + args );
         if( method_name.equals( "invisible_brick" ) ){ //4
           invisible_brick( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "coin" ) ){ //2f
@@ -2523,7 +2523,7 @@ void load_level( String filename ){
       
       line = br_in.readLine();
     }
-    println( "Done processing lines" );
+    //println( "Done processing lines" );
     
     
   }catch( java.io.FileNotFoundException ex ){
@@ -2556,7 +2556,7 @@ void save_level( String filename ){
         level += "\n";
       }
     }
-    println( level );
+    //println( level );
     
     
     if( filename.length() == 0 ){
