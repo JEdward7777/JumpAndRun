@@ -1,3 +1,4 @@
+
 import java.util.LinkedList;
 
 import java.io.File;
@@ -2341,11 +2342,11 @@ void load_level( String filename ){
   level_name = filename;
   remove_things();
   
-  BufferedReader in = null;
+  BufferedReader br_in = null;
   try{
-    in = new BufferedReader( new FileReader( new File(sketchPath(), filename + ".lvl" ) ) );
+    br_in = new BufferedReader( new FileReader( new File(sketchPath(), filename + ".lvl" ) ) );
     
-    String line = in.readLine();
+    String line = br_in.readLine();
     
     while( line != null ){
       println( "processing line \"" + line + "\"" );
@@ -2440,7 +2441,7 @@ void load_level( String filename ){
         while( index < line.length() && line.charAt(index) == ' ' ) index++;
       }
       
-      line = in.readLine();
+      line = br_in.readLine();
     }
     println( "Done processing lines" );
     
@@ -2452,7 +2453,7 @@ void load_level( String filename ){
     
   }finally{
     try{
-      if( in != null )in.close();
+      if( br_in != null )br_in.close();
     }catch( java.io.IOException ex ){
     }
   }
