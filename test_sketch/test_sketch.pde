@@ -1,4 +1,3 @@
-
 import java.util.LinkedList;
 
 import java.io.File;
@@ -7,6 +6,7 @@ import java.io.FileReader;
 
 color blue = color( 0,0,255 );
 color red = color( 255, 0, 0 );
+color purple = color( 230,230,250 );
 
 String[] level_codes = { "", "22222", "33333", "44444", "55555", "66666", "77777", "88888","99999", "45324", "11111", "12121" };
 
@@ -955,6 +955,8 @@ void keyPressed() {
       key(  0, 0, 255, person.loc.x/block_size.x, person.loc.y/block_size.y );
     }else if( key == '7' ){
       keyed_button(  0, 0, 255, person.loc.x/block_size.x, person.loc.y/block_size.y );
+    }else if( keyCode == CONTROL ){
+      maker_maker( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -.8 );
     }else if( key == 's' ){
       show_save_menu();
       //String level = "";
@@ -1847,7 +1849,7 @@ void walky( float x, float y, float x_speed ){
    all_things.add(bob);
    last_growable = bob;
 }
-void walky2( float x, float y, float size, float x_speed ){
+WalkyBadguy walky2( float x, float y, float size, float x_speed ){
    WalkyBadguy bob = new WalkyBadguy();
    bob.loc.x = x*block_size.x;
    bob.loc.y = y*block_size.y;
@@ -1857,6 +1859,7 @@ void walky2( float x, float y, float size, float x_speed ){
    //println( "bob is at " + bob.loc );
    all_things.add(bob);
    last_growable = bob;
+   return bob;
 }
 
 class LaserLight extends Thing{
@@ -2204,6 +2207,116 @@ void spike( float x, float y, float width, float height ){
    last_growable = bob;
    last_last_thing = last_thing;
    last_thing = bob;
+}
+
+class MakerMakerBadguy extends Badguy{
+  static final int SITTING = 0;
+  static final int CHARGING = 1;
+  static final int MAKING = 2;
+  static final int MOVING = 3;
+  
+  static final int MIN_SIT_TIME = 100;
+  static final int MAX_SIT_TIME = 200;
+  
+  static final int MIN_MOVE_TIME = 50;
+  static final int MAX_MOVE_TIME = 150;
+  
+  static final int CHARGE_TIME = 100;
+  static final int MAKE_TIME = 300;
+  
+  int mode = SITTING;
+  int count_down = 0;
+  
+  float walking_speed = .8;
+  float saved_speed = 0;
+  
+  Badguy baby = null;
+  
+  public MakerMakerBadguy(){
+    mode = SITTING;
+    count_down = (int)random( MAX_SIT_TIME-MIN_SIT_TIME ) + MIN_SIT_TIME;
+  }
+  public void draw(){
+    if( !person.maker_mode ) count_down--;
+
+    if( mode == SITTING ){
+      //fill( 181, 181, 181 );
+      
+      if( count_down <= 0 ){
+        mode = CHARGING;
+        count_down = CHARGE_TIME;
+      }
+    }else if( mode == CHARGING ){
+      int charged_color = 255;
+      //fill( int( (count_down-CHARGE_TIME)/(float)(charged_color-CHARGE_TIME)*(charged_color-181)+181 ) );
+      
+      if( count_down <= 0 ){
+        mode = MAKING;
+        count_down = MAKE_TIME;
+        
+        int direction = (saved_speed > 0)?1:-1;
+        
+        //shoot_laser( loc.plus(new Loc(direction*(.25*size.x+1),0)), direction, 100, this );
+      }
+    }else if( mode == MAKING ){
+      //fill( 255, 0, 0 );
+      
+      if( baby == null ){
+        baby = walky2( this.loc.x, this.loc.y+this.size.y, this.size.x/(float)MAKE_TIME, 0 );
+      }
+      baby.size.x = (MAKE_TIME-count_down)*this.size.x/(float)MAKE_TIME;
+      baby.size.y = (MAKE_TIME-count_down)*this.size.y/(float)MAKE_TIME;
+      
+      if( count_down <= 0 ){
+        mode = MOVING;
+        count_down = (int)random( MAX_MOVE_TIME-MIN_MOVE_TIME ) + MIN_MOVE_TIME;
+        
+        if( saved_speed != 0 ){
+          speed.x = saved_speed;
+        }else{
+          speed.x = walking_speed;
+        }
+      }
+    }else if( mode == MOVING ){
+      if( baby != null ){
+        //baby.walking_speed = this.walking_speed;
+        baby = null;
+      }
+      
+      //fill( 181, 181, 181 );
+   
+      if( count_down <= 0 ){
+        mode = SITTING;
+        count_down = (int)random( MAX_SIT_TIME-MIN_SIT_TIME ) + MIN_SIT_TIME;
+        
+        saved_speed = speed.x;
+        speed.x = 0;
+      }
+    }
+
+    //bookmark
+    
+    super.draw();
+    pushStyle();
+    fill( purple );
+    rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
+    popStyle();
+  }
+  
+  public String save(){
+    return "   maker_maker(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+  }
+}
+void maker_maker( float x, float y, float size, float x_speed ){
+   MakerMakerBadguy bob = new MakerMakerBadguy();
+   bob.loc.x = x*block_size.x;
+   bob.loc.y = y*block_size.y;
+   bob.size.x = size*block_size.x;
+   bob.size.y = size*block_size.y;
+   bob.walking_speed = x_speed;
+   //println( "bob is at " + bob.loc );
+   all_things.add(bob);
+   last_growable = bob;
 }
    
 Person person = null;
