@@ -46,6 +46,12 @@ Now full screen works.
 
 ---todo.
 
+[ ] Upload to the service (netlify) which lets you have static content for free.
+
+[ ] Make it so that the site has a shorter url perhaps from lansfords.com
+
+[ ] add screen buttons for moving if you are on a phone.
+
 [ ] Make it so that when you save, it downloads the file.
 
 [ ] Make it so that when you go to load it offers for you to upload a file.
