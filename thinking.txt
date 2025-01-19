@@ -44,7 +44,26 @@ Now going to make the sketch full screen.  I mean full window.
 
 Now full screen works.
 
+01/19/2025
+Adding a new badguy to the Java side which makes walkies.
+
+[x] Make baby walk after made
+
+[x] Add sound effect to maker maker
+
+Done.  Well, need to make it not take so long to air baby up because the sound is shorter.
+
 ---todo.
+
+[ ] Make babies not save.
+
+[ ] Add face to maker maker
+
+[ ] fix dwell times.
+
+[ ] Remove debug information from screen.
+
+---
 
 [ ] Upload to the service (netlify) which lets you have static content for free.
 

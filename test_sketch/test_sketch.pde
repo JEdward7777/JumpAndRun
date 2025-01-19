@@ -894,7 +894,7 @@ void keyPressed() {
       }
     }else if( keyCode == UP ){
       person.loc.y = (round(person.loc.y/block_size.y)-1)*block_size.y;
-      if( last_gravity_switch != null ){ //<>//
+      if( last_gravity_switch != null ){
         last_gravity_switch.target_gravity = new Loc(0,-.3);
         last_gravity_switch = null;
       }
@@ -1102,7 +1102,7 @@ class SolidBrick extends Thing{
     fill( red );
     rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
   }
-  public void interact( Thing other_thing, boolean is_person ){ //<>//
+  public void interact( Thing other_thing, boolean is_person ){
     if( other_thing == this ) return;
     Touch touch = other_thing.how_am_I_touching( this );
     if( touch.touching ){
@@ -2209,6 +2209,17 @@ void spike( float x, float y, float width, float height ){
    last_thing = bob;
 }
 
+WalkyBadguy birth_walky( float x, float y, float size, float x_speed ){
+   WalkyBadguy bob = new WalkyBadguy();
+   bob.loc.x = x*block_size.x;
+   bob.loc.y = y*block_size.y;
+   bob.size.x = size*block_size.x;
+   bob.size.y = size*block_size.y;
+   bob.speed.x = x_speed;
+   things_to_add.add(bob);
+   return bob;
+}
+
 class MakerMakerBadguy extends Badguy{
   static final int SITTING = 0;
   static final int CHARGING = 1;
@@ -2222,7 +2233,9 @@ class MakerMakerBadguy extends Badguy{
   static final int MAX_MOVE_TIME = 150;
   
   static final int CHARGE_TIME = 100;
-  static final int MAKE_TIME = 300;
+  static final int MAKE_TIME = 60;
+
+  static final int AIR_SOUND_RANGE = 900;
   
   int mode = SITTING;
   int count_down = 0;
@@ -2238,8 +2251,10 @@ class MakerMakerBadguy extends Badguy{
   }
   public void draw(){
     if( !person.maker_mode ) count_down--;
-
+    
+    String doing = "";
     if( mode == SITTING ){
+      doing = "sitting";
       //fill( 181, 181, 181 );
       
       if( count_down <= 0 ){
@@ -2247,6 +2262,7 @@ class MakerMakerBadguy extends Badguy{
         count_down = CHARGE_TIME;
       }
     }else if( mode == CHARGING ){
+      doing = "CHARGING";
       int charged_color = 255;
       //fill( int( (count_down-CHARGE_TIME)/(float)(charged_color-CHARGE_TIME)*(charged_color-181)+181 ) );
       
@@ -2259,13 +2275,25 @@ class MakerMakerBadguy extends Badguy{
         //shoot_laser( loc.plus(new Loc(direction*(.25*size.x+1),0)), direction, 100, this );
       }
     }else if( mode == MAKING ){
+      doing = "MAKING";
       //fill( 255, 0, 0 );
       
       if( baby == null ){
-        baby = walky2( this.loc.x, this.loc.y+this.size.y, this.size.x/(float)MAKE_TIME, 0 );
+        baby = birth_walky( this.loc.x/(float)block_size.x, (this.loc.y+this.size.y)/(float)block_size.x, (this.size.x/(float)MAKE_TIME)/(float)block_size.x, this.walking_speed );
+
+        //only make sound if within AIR_SOUND_RANGE of person
+
+        if( person.loc.minus(this.loc).r() < AIR_SOUND_RANGE ){
+          air_up_sound.setFramePosition(0);
+          air_up_sound.start();
+          println( "Yes R was " + person.loc.minus(this.loc).r() );
+        }else{
+          println( "No R was " + person.loc.minus(this.loc).r() );
+        }
       }
       baby.size.x = (MAKE_TIME-count_down)*this.size.x/(float)MAKE_TIME;
       baby.size.y = (MAKE_TIME-count_down)*this.size.y/(float)MAKE_TIME;
+      baby.speed.x = 0;
       
       if( count_down <= 0 ){
         mode = MOVING;
@@ -2278,8 +2306,9 @@ class MakerMakerBadguy extends Badguy{
         }
       }
     }else if( mode == MOVING ){
+      doing = "MOVING";
       if( baby != null ){
-        //baby.walking_speed = this.walking_speed;
+        baby.speed.x = this.walking_speed;
         baby = null;
       }
       
@@ -2293,6 +2322,18 @@ class MakerMakerBadguy extends Badguy{
         speed.x = 0;
       }
     }
+    
+    textSize( 20 );
+    int y = 1;
+    text( "mm is " + doing + " at " + count_down, 50, 100 + (y++)*20 );
+    if( baby == null ){
+      text( "baby null", 50, 100 + (y++)*20 ); 
+    }else{
+      text( "baby loc " + baby.loc, 50, 100 + (y++)*20 );
+      text( "baby size " + baby.size, 50, 100 + (y++)*20 );
+      text( "my loc " + loc, 50, 100 + (y++)*20 );
+    }
+    text( "person r" + person.loc.minus(this.loc).r(), 50, 100 + (y++)*20 );
 
     //bookmark
     
@@ -2334,6 +2375,7 @@ Clip badguy_die_sound;
 Clip win_sound;
 Clip open_door_sound;
 Clip close_door_sound;
+Clip air_up_sound;
 Clip sad_sound;
 void setup() {
   fullScreen();
@@ -2350,7 +2392,7 @@ void setup() {
   //println( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
   
   //Media hit = new Media( new File( sketchPath(), "/data/coin.mp3").toURI().toString() );
-  //coin_sound = new MediaPlayer(hit); //<>//
+  //coin_sound = new MediaPlayer(hit);
   try{
     coin_sound = AudioSystem.getClip();
     coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
@@ -2366,6 +2408,9 @@ void setup() {
     
     open_door_sound = AudioSystem.getClip();
     open_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_open.wav")));
+
+    air_up_sound = AudioSystem.getClip();
+    air_up_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/air_up.wav")));
     
     close_door_sound = AudioSystem.getClip();
     close_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_close.wav")));
@@ -2489,17 +2534,17 @@ void load_level( String filename ){
           String arg = "";
           while( line.charAt(index) == ' ' ) index++;
           while( line.charAt(index) != ',' && line.charAt(index) != ')' && line.charAt(index ) != ' ' ){
-            arg = arg + line.charAt(index); //<>//
+            arg = arg + line.charAt(index);
             index++;
           }
           while( line.charAt(index) == ' ' ) index++;
-          if( line.charAt(index) == ')' )done_with_args = true; //<>//
+          if( line.charAt(index) == ')' )done_with_args = true;
           index++;
-          while( line.charAt(index) == ' ' ) index++; //<>//
+          while( line.charAt(index) == ' ' ) index++;
           args.add( arg );
-        } //<>//
+        }
         if( line.charAt(index) == ';' ) index++;
-         //<>//
+        
         if( args.size() > 4 ){
           println( "More then four" );
         }
@@ -2527,7 +2572,7 @@ void load_level( String filename ){
         }else if( method_name.equals( "water" ) ){ //4f
           water( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "teleporter" ) ){ //2f
-          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) ); //<>//
+          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
         }else if( method_name.equals( "key" ) ){ //3i 2f
           key( Integer.parseInt( args.get(0) ), Integer.parseInt( args.get(1) ), Integer.parseInt( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
         }else if( method_name.equals( "door" ) ){ //4f
