@@ -53,13 +53,15 @@ Adding a new badguy to the Java side which makes walkies.
 
 Done.  Well, need to make it not take so long to air baby up because the sound is shorter.
 
+[x] Make babies not save.
+
+[x] Add face to maker maker
+
+[x] fix dwell times.
+
+Added faces.
+
 ---todo.
-
-[ ] Make babies not save.
-
-[ ] Add face to maker maker
-
-[ ] fix dwell times.
 
 [ ] Remove debug information from screen.
 

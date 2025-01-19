@@ -956,7 +956,7 @@ void keyPressed() {
     }else if( key == '7' ){
       keyed_button(  0, 0, 255, person.loc.x/block_size.x, person.loc.y/block_size.y );
     }else if( keyCode == CONTROL ){
-      maker_maker( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -.8 );
+      maker_maker( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -2 );
     }else if( key == 's' ){
       show_save_menu();
       //String level = "";
@@ -2229,17 +2229,15 @@ WalkyBadguy birth_walky( float x, float y, float size, float x_speed ){
 
 class MakerMakerBadguy extends Badguy{
   static final int SITTING = 0;
-  static final int CHARGING = 1;
-  static final int MAKING = 2;
-  static final int MOVING = 3;
+  static final int MAKING = 1;
+  static final int MOVING = 2;
   
-  static final int MIN_SIT_TIME = 100;
-  static final int MAX_SIT_TIME = 200;
+  static final int MIN_SIT_TIME = 50;
+  static final int MAX_SIT_TIME = 100;
   
-  static final int MIN_MOVE_TIME = 50;
-  static final int MAX_MOVE_TIME = 150;
+  static final int MIN_MOVE_TIME = 300;
+  static final int MAX_MOVE_TIME = 400;
   
-  static final int CHARGE_TIME = 100;
   static final int MAKE_TIME = 60;
 
   static final int AIR_SOUND_RANGE = 900;
@@ -2259,30 +2257,52 @@ class MakerMakerBadguy extends Badguy{
   public void draw(){
     if( !person.maker_mode ) count_down--;
     
+    
+    pushStyle();
+    fill( purple );
+    rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
+    popStyle();
+    
     String doing = "";
+    int d = (saved_speed > 0)?1:-1;
     if( mode == SITTING ){
       doing = "sitting";
-      //fill( 181, 181, 181 );
       
-      if( count_down <= 0 ){
-        mode = CHARGING;
-        count_down = CHARGE_TIME;
-      }
-    }else if( mode == CHARGING ){
-      doing = "CHARGING";
-      int charged_color = 255;
-      //fill( int( (count_down-CHARGE_TIME)/(float)(charged_color-CHARGE_TIME)*(charged_color-181)+181 ) );
+      pushStyle();
+      strokeWeight(2);
+      stroke(0);
+    
+      //happy face for sitting
+      line( loc.x+d*4.5*size.x/(float)16, loc.y-2.0*size.y/(float)8, loc.x+d*4.5*size.x/(float)16, loc.y-3.0*size.y/(float)8 );
+      line( loc.x+d*2.5*size.x/(float)16, loc.y-2.0*size.y/(float)8, loc.x+d*2.5*size.x/(float)16, loc.y-3.0*size.y/(float)8 );
+      line( loc.x+d*0*size.x/(float)16, loc.y+0.5*size.y/(float)8, loc.x+d*0*size.x/(float)16, loc.y-1.5*size.y/(float)8 );
+      line( loc.x+d*0*size.x/(float)16, loc.y-0.5*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y-0.5*size.y/(float)8 );
+      line( loc.x+d*6*size.x/(float)16, loc.y-1.5*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y+0.5*size.y/(float)8 );
+      line( loc.x+d*6*size.x/(float)16, loc.y+0.5*size.y/(float)8, loc.x+d*0*size.x/(float)16, loc.y+0.5*size.y/(float)8 );
+      
+      popStyle();
       
       if( count_down <= 0 ){
         mode = MAKING;
         count_down = MAKE_TIME;
-        
-        int direction = (saved_speed > 0)?1:-1;
-        
-        //shoot_laser( loc.plus(new Loc(direction*(.25*size.x+1),0)), direction, 100, this );
       }
     }else if( mode == MAKING ){
       doing = "MAKING";
+      
+      //Sqeeze face.  For making.      
+      pushStyle();
+      strokeWeight(2);
+      stroke(0);
+      line( loc.x+d*6*size.x/(float)16, loc.y-3.0*size.y/(float)8, loc.x+d*4*size.x/(float)16, loc.y-2.5*size.y/(float)8 );
+      line( loc.x+d*4*size.x/(float)16, loc.y-2.5*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y-2.0*size.y/(float)8 );
+      line( loc.x+d*0*size.x/(float)16, loc.y-3.0*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y-2.5*size.y/(float)8 );
+      line( loc.x+d*2*size.x/(float)16, loc.y-2.5*size.y/(float)8, loc.x+d*0*size.x/(float)16, loc.y-2.0*size.y/(float)8 );
+      line( loc.x+d*2*size.x/(float)16, loc.y-0.5*size.y/(float)8, loc.x+d*3*size.x/(float)16, loc.y-1.0*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y-1.0*size.y/(float)8, loc.x+d*4*size.x/(float)16, loc.y-0.5*size.y/(float)8 );
+      line( loc.x+d*4*size.x/(float)16, loc.y-0.5*size.y/(float)8, loc.x+d*3*size.x/(float)16, loc.y-0.0*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y-0.0*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y-0.5*size.y/(float)8 );
+      popStyle();
+      
       //fill( 255, 0, 0 );
       
       if( baby == null ){
@@ -2313,9 +2333,22 @@ class MakerMakerBadguy extends Badguy{
         }
       }
     }else if( mode == MOVING ){
+      //image closed eyes probably for walking.     
+      pushStyle();
+      strokeWeight(2);
+      stroke(0);
+      line( loc.x+d*7*size.x/(float)16, loc.y-2*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y-3*size.y/(float)8 );
+      line( loc.x+d*6*size.x/(float)16, loc.y-3*size.y/(float)8, loc.x+d*5*size.x/(float)16, loc.y-2*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y-2*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y-3*size.y/(float)8 );
+      line( loc.x+d*2*size.x/(float)16, loc.y-3*size.y/(float)8, loc.x+d*1*size.x/(float)16, loc.y-2*size.y/(float)8 );
+      line( loc.x+d*4*size.x/(float)16, loc.y+0*size.y/(float)8, loc.x+d*3*size.x/(float)16, loc.y+1*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y+1*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y+0*size.y/(float)8 );
+      popStyle();
+      
+      
       doing = "MOVING";
       if( baby != null ){
-        baby.speed.x = this.walking_speed;
+        baby.speed.x = -1*this.walking_speed;
         baby = null;
       }
       
@@ -2345,10 +2378,6 @@ class MakerMakerBadguy extends Badguy{
     //bookmark
     
     super.draw();
-    pushStyle();
-    fill( purple );
-    rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
-    popStyle();
   }
   
   public String save(){
