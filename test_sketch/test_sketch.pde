@@ -1835,8 +1835,14 @@ class WalkyBadguy extends Badguy{
     popStyle();
   }
   
+  //flag for something to set for this not to save.
+  public boolean dont_save = false;
   public String save(){
-    return "   walky2(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+    if( !dont_save ){
+      return "   walky2(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+    }else{
+      return "";
+    }
   }
 }
 Thing last_growable = null;
@@ -2216,6 +2222,7 @@ WalkyBadguy birth_walky( float x, float y, float size, float x_speed ){
    bob.size.x = size*block_size.x;
    bob.size.y = size*block_size.y;
    bob.speed.x = x_speed;
+   bob.dont_save = true;
    things_to_add.add(bob);
    return bob;
 }
@@ -2593,6 +2600,8 @@ void load_level( String filename ){
           bouncy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "loopy" ) ){ //5f
           loopy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
+        }else if( method_name.equals( "maker_maker" ) ){ //4f
+          maker_maker( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else{
           throw new IOException( "Unknown thingy \"" + method_name + "\" with args \"" + args + "\"" );
         }
