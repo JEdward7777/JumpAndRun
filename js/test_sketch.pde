@@ -7,6 +7,7 @@ import java.io.FileReader;
 
 color blue = color( 0,0,255 );
 color red = color( 255, 0, 0 );
+color purple = color( 230,230,250 );
 
 String[] level_codes = { "", "22222", "33333", "44444", "55555", "66666", "77777", "88888","99999", "45324", "11111", "12121" };
 
@@ -88,7 +89,6 @@ class StartMenu extends Menu{
     textSize(100);
     textAlign(LEFT, CENTER);
     text( code, box_pos.x-.5*box_size.x + 5, box_pos.y );
-    //text( "potato", box_pos.x-.5*box_size.x + 5, box_pos.y );
     
     //now draw wrong code text
     if( wrong_code ){
@@ -911,7 +911,7 @@ void keyPressed() {
       }
     }else if( keyCode == UP ){
       person.loc.y = (round(person.loc.y/block_size.y)-1)*block_size.y;
-      if( last_gravity_switch != null ){ //<>//
+      if( last_gravity_switch != null ){
         last_gravity_switch.target_gravity = new Loc(0,-.3);
         last_gravity_switch = null;
       }
@@ -972,6 +972,8 @@ void keyPressed() {
       key(  0, 0, 255, person.loc.x/block_size.x, person.loc.y/block_size.y );
     }else if( key == '7' ){
       keyed_button(  0, 0, 255, person.loc.x/block_size.x, person.loc.y/block_size.y );
+    }else if( keyCode == CONTROL ){
+      maker_maker( person.loc.x/block_size.x, person.loc.y/block_size.y, 1, -2 );
     }else if( key == 's' ){
       show_save_menu();
       //String level = "";
@@ -1118,7 +1120,7 @@ class SolidBrick extends Thing{
     fill( red );
     rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
   }
-  public void interact( Thing other_thing, boolean is_person ){ //<>//
+  public void interact( Thing other_thing, boolean is_person ){
     if( other_thing == this ) return;
     Touch touch = other_thing.how_am_I_touching( this );
     if( touch.touching ){
@@ -1856,8 +1858,14 @@ class WalkyBadguy extends Badguy{
     popStyle();
   }
   
+  //flag for something to set for this not to save.
+  public boolean dont_save = false;
   public String save(){
-    return "   walky2(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+    if( !dont_save ){
+      return "   walky2(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+    }else{
+      return "";
+    }
   }
 }
 Thing last_growable = null;
@@ -1870,7 +1878,7 @@ void walky( float x, float y, float x_speed ){
    all_things.add(bob);
    last_growable = bob;
 }
-void walky2( float x, float y, float size, float x_speed ){
+WalkyBadguy walky2( float x, float y, float size, float x_speed ){
    WalkyBadguy bob = new WalkyBadguy();
    bob.loc.x = x*block_size.x;
    bob.loc.y = y*block_size.y;
@@ -1880,6 +1888,7 @@ void walky2( float x, float y, float size, float x_speed ){
    //println( "bob is at " + bob.loc );
    all_things.add(bob);
    last_growable = bob;
+   return bob;
 }
 
 class LaserLight extends Thing{
@@ -2029,8 +2038,6 @@ class LaserSpikeBadguy extends Badguy{
         speed.x = 0;
       }
     }
-
-    //bookmark
     
     super.draw();
     pushStyle();
@@ -2229,71 +2236,172 @@ void spike( float x, float y, float width, float height ){
    last_last_thing = last_thing;
    last_thing = bob;
 }
+
+WalkyBadguy birth_walky( float x, float y, float size, float x_speed ){
+   WalkyBadguy bob = new WalkyBadguy();
+   bob.loc.x = x*block_size.x;
+   bob.loc.y = y*block_size.y;
+   bob.size.x = size*block_size.x;
+   bob.size.y = size*block_size.y;
+   bob.speed.x = x_speed;
+   bob.dont_save = true;
+   things_to_add.add(bob);
+   return bob;
+}
+
+class MakerMakerBadguy extends Badguy{
+  static final int SITTING = 0;
+  static final int MAKING = 1;
+  static final int MOVING = 2;
+  
+  static final int MIN_SIT_TIME = 50;
+  static final int MAX_SIT_TIME = 100;
+  
+  static final int MIN_MOVE_TIME = 300;
+  static final int MAX_MOVE_TIME = 400;
+  
+  static final int MAKE_TIME = 60;
+
+  static final int AIR_SOUND_RANGE = 900;
+  
+  int mode = SITTING;
+  int count_down = 0;
+  
+  float walking_speed = .8;
+  float saved_speed = 0;
+  
+  Badguy baby = null;
+  
+  public MakerMakerBadguy(){
+    mode = SITTING;
+    count_down = (int)random( MAX_SIT_TIME-MIN_SIT_TIME ) + MIN_SIT_TIME;
+  }
+  public void draw(){
+    if( !person.maker_mode ) count_down--;
+    
+    
+    pushStyle();
+    fill( purple );
+    rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
+    popStyle();
+    
+    int d = (speed.x > 0)?1:(speed.x < 0)?-1:(saved_speed > 0)?1:-1;
+    if( mode == SITTING ){
+      pushStyle();
+      strokeWeight(2);
+      stroke(0);
+    
+      //happy face for sitting
+      line( loc.x+d*4.5*size.x/(float)16, loc.y-2.0*size.y/(float)8, loc.x+d*4.5*size.x/(float)16, loc.y-3.0*size.y/(float)8 );
+      line( loc.x+d*2.5*size.x/(float)16, loc.y-2.0*size.y/(float)8, loc.x+d*2.5*size.x/(float)16, loc.y-3.0*size.y/(float)8 );
+      line( loc.x+d*0*size.x/(float)16, loc.y+0.5*size.y/(float)8, loc.x+d*0*size.x/(float)16, loc.y-1.5*size.y/(float)8 );
+      line( loc.x+d*0*size.x/(float)16, loc.y-0.5*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y-0.5*size.y/(float)8 );
+      line( loc.x+d*6*size.x/(float)16, loc.y-1.5*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y+0.5*size.y/(float)8 );
+      line( loc.x+d*6*size.x/(float)16, loc.y+0.5*size.y/(float)8, loc.x+d*0*size.x/(float)16, loc.y+0.5*size.y/(float)8 );
+      
+      popStyle();
+      
+      if( count_down <= 0 ){
+        mode = MAKING;
+        count_down = MAKE_TIME;
+      }
+    }else if( mode == MAKING ){
+      //Sqeeze face.  For making.      
+      pushStyle();
+      strokeWeight(2);
+      stroke(0);
+      line( loc.x+d*6*size.x/(float)16, loc.y-3.0*size.y/(float)8, loc.x+d*4*size.x/(float)16, loc.y-2.5*size.y/(float)8 );
+      line( loc.x+d*4*size.x/(float)16, loc.y-2.5*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y-2.0*size.y/(float)8 );
+      line( loc.x+d*0*size.x/(float)16, loc.y-3.0*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y-2.5*size.y/(float)8 );
+      line( loc.x+d*2*size.x/(float)16, loc.y-2.5*size.y/(float)8, loc.x+d*0*size.x/(float)16, loc.y-2.0*size.y/(float)8 );
+      line( loc.x+d*2*size.x/(float)16, loc.y-0.5*size.y/(float)8, loc.x+d*3*size.x/(float)16, loc.y-1.0*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y-1.0*size.y/(float)8, loc.x+d*4*size.x/(float)16, loc.y-0.5*size.y/(float)8 );
+      line( loc.x+d*4*size.x/(float)16, loc.y-0.5*size.y/(float)8, loc.x+d*3*size.x/(float)16, loc.y-0.0*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y-0.0*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y-0.5*size.y/(float)8 );
+      popStyle();
+      
+      //fill( 255, 0, 0 );
+      
+      if( baby == null ){
+        baby = birth_walky( this.loc.x/(float)block_size.x, (this.loc.y+this.size.y)/(float)block_size.x, (this.size.x/(float)MAKE_TIME)/(float)block_size.x, this.walking_speed );
+
+        //only make sound if within AIR_SOUND_RANGE of person
+
+        if( person.loc.minus(this.loc).r() < AIR_SOUND_RANGE ){
+          air_up_sound.setFramePosition(0);
+          air_up_sound.start();
+          println( "Yes R was " + person.loc.minus(this.loc).r() );
+        }else{
+          println( "No R was " + person.loc.minus(this.loc).r() );
+        }
+      }
+      baby.size.x = (MAKE_TIME-count_down)*this.size.x/(float)MAKE_TIME;
+      baby.size.y = (MAKE_TIME-count_down)*this.size.y/(float)MAKE_TIME;
+      baby.speed.x = 0;
+      
+      if( count_down <= 0 ){
+        mode = MOVING;
+        count_down = (int)random( MAX_MOVE_TIME-MIN_MOVE_TIME ) + MIN_MOVE_TIME;
+        
+        if( saved_speed != 0 ){
+          speed.x = saved_speed;
+        }else{
+          speed.x = walking_speed;
+        }
+      }
+    }else if( mode == MOVING ){
+      //image closed eyes probably for walking.     
+      pushStyle();
+      strokeWeight(2);
+      stroke(0);
+      line( loc.x+d*7*size.x/(float)16, loc.y-2*size.y/(float)8, loc.x+d*6*size.x/(float)16, loc.y-3*size.y/(float)8 );
+      line( loc.x+d*6*size.x/(float)16, loc.y-3*size.y/(float)8, loc.x+d*5*size.x/(float)16, loc.y-2*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y-2*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y-3*size.y/(float)8 );
+      line( loc.x+d*2*size.x/(float)16, loc.y-3*size.y/(float)8, loc.x+d*1*size.x/(float)16, loc.y-2*size.y/(float)8 );
+      line( loc.x+d*4*size.x/(float)16, loc.y+0*size.y/(float)8, loc.x+d*3*size.x/(float)16, loc.y+1*size.y/(float)8 );
+      line( loc.x+d*3*size.x/(float)16, loc.y+1*size.y/(float)8, loc.x+d*2*size.x/(float)16, loc.y+0*size.y/(float)8 );
+      popStyle();
+      
+      
+      if( baby != null ){
+        baby.speed.x = -1*this.walking_speed;
+        baby = null;
+      }
+      
+      //fill( 181, 181, 181 );
+   
+      if( count_down <= 0 ){
+        mode = SITTING;
+        count_down = (int)random( MAX_SIT_TIME-MIN_SIT_TIME ) + MIN_SIT_TIME;
+        
+        saved_speed = speed.x;
+        speed.x = 0;
+      }
+    }
+    
+    super.draw();
+  }
+  
+  public String save(){
+    return "   maker_maker(" + (loc.x/block_size.x) + "," + (loc.y/block_size.y) + "," + (size.x/block_size.x) + "," + this.speed.x + ");";
+  }
+}
+void maker_maker( float x, float y, float size, float x_speed ){
+   MakerMakerBadguy bob = new MakerMakerBadguy();
+   bob.loc.x = x*block_size.x;
+   bob.loc.y = y*block_size.y;
+   bob.size.x = size*block_size.x;
+   bob.size.y = size*block_size.y;
+   bob.walking_speed = x_speed;
+   //println( "bob is at " + bob.loc );
+   all_things.add(bob);
+   last_growable = bob;
+}
    
 Person person = null;
 void person_init( float x, float y ){
   person.loc.x = x*(block_size.x);
   person.loc.y = y*(block_size.y);
-}
-
-
-void loadSound(String name, String url) {
-    fetch(url)
-        .then(response => response.arrayBuffer())
-        .then(data => audioContext.decodeAudioData(data, buffer => {
-            sounds[name] = buffer // Store the decoded sound buffer
-        }));
-}
-
-void loadSounds(){
-    try{
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-    //coin_sound = AudioSystem.getClip();
-    //coin_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/coin.wav")));
-    loadSound( "coin_sound", "../test_sketch/data/coin.wav" );
-    
-    //teleporter_sound = AudioSystem.getClip();
-    //teleporter_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/teleport.wav")));
-    loadSound( "teleporter_sound", "../test_sketch/data/teleport.wav" );
-    
-    //badguy_die_sound = AudioSystem.getClip();
-    //badguy_die_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/badguy_die.wav")));
-    loadSound( "badguy_die_sound", "../test_sketch/data/badguy_die.wav")
-    
-    //win_sound = AudioSystem.getClip();
-    //win_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/win.wav")));
-    loadSound( "win_sound", "../test_sketch/data/win.wav");
-    
-    //open_door_sound = AudioSystem.getClip();
-    //open_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_open.wav")));
-    loadSound( "open_door_sound", "../test_sketch/data/door_open.wav" );
-    
-    //close_door_sound = AudioSystem.getClip();
-    //close_door_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/door_close.wav")));
-    loadSound( "close_door_sound", "../test_sketch/data/door_close.wav" );
-    
-    //sad_sound = AudioSystem.getClip();
-    //sad_sound.open(AudioSystem.getAudioInputStream(new File(sketchPath(), "/data/sad.wav")));
-    loadSound( "sad_sound", "../test_sketch/data/sad.wav" );
-
-  }catch( Exception exc ){ 
-
-    //exc.printStackTrace(System.out);
-    console.error(exc)
-  }
-}
-
-void playSound(String name) {
-  console.log( "play sound", name );
-  if( audioContext === null ){
-    loadSounds();
-  }else if (sounds[name]) {
-        var source = audioContext.createBufferSource();
-        source.buffer = sounds[name];
-        source.connect(audioContext.destination);
-        source.start(0); // Play the sound immediately
-  }
 }
  
 // The statements in the setup() function 
@@ -2494,7 +2602,7 @@ void load_level( String filename ){
         }else if( method_name.equals( "water" ) ){ //4f
           water( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "teleporter" ) ){ //2f
-          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) ); //<>//
+          teleporter( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ) );
         }else if( method_name.equals( "key" ) ){ //3i 2f
           key( Integer.parseInt( args.get(0) ), Integer.parseInt( args.get(1) ), Integer.parseInt( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
         }else if( method_name.equals( "door" ) ){ //4f
@@ -2515,6 +2623,8 @@ void load_level( String filename ){
           bouncy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else if( method_name.equals( "loopy" ) ){ //5f
           loopy( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ), Float.parseFloat( args.get(4) ) );
+        }else if( method_name.equals( "maker_maker" ) ){ //4f
+          maker_maker( Float.parseFloat( args.get(0) ), Float.parseFloat( args.get(1) ), Float.parseFloat( args.get(2) ), Float.parseFloat( args.get(3) ) );
         }else{
           throw new IOException( "Unknown thingy \"" + method_name + "\" with args \"" + args + "\"" );
         }
