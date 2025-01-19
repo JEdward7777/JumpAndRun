@@ -2015,8 +2015,6 @@ class LaserSpikeBadguy extends Badguy{
         speed.x = 0;
       }
     }
-
-    //bookmark
     
     super.draw();
     pushStyle();
@@ -2263,11 +2261,8 @@ class MakerMakerBadguy extends Badguy{
     rect(loc.x-.5*size.x, loc.y-.5*size.y, size.x, size.y, 7);
     popStyle();
     
-    String doing = "";
-    int d = (saved_speed > 0)?1:-1;
+    int d = (speed.x > 0)?1:(speed.x < 0)?-1:(saved_speed > 0)?1:-1;
     if( mode == SITTING ){
-      doing = "sitting";
-      
       pushStyle();
       strokeWeight(2);
       stroke(0);
@@ -2287,8 +2282,6 @@ class MakerMakerBadguy extends Badguy{
         count_down = MAKE_TIME;
       }
     }else if( mode == MAKING ){
-      doing = "MAKING";
-      
       //Sqeeze face.  For making.      
       pushStyle();
       strokeWeight(2);
@@ -2346,7 +2339,6 @@ class MakerMakerBadguy extends Badguy{
       popStyle();
       
       
-      doing = "MOVING";
       if( baby != null ){
         baby.speed.x = -1*this.walking_speed;
         baby = null;
@@ -2362,20 +2354,6 @@ class MakerMakerBadguy extends Badguy{
         speed.x = 0;
       }
     }
-    
-    textSize( 20 );
-    int y = 1;
-    text( "mm is " + doing + " at " + count_down, 50, 100 + (y++)*20 );
-    if( baby == null ){
-      text( "baby null", 50, 100 + (y++)*20 ); 
-    }else{
-      text( "baby loc " + baby.loc, 50, 100 + (y++)*20 );
-      text( "baby size " + baby.size, 50, 100 + (y++)*20 );
-      text( "my loc " + loc, 50, 100 + (y++)*20 );
-    }
-    text( "person r" + person.loc.minus(this.loc).r(), 50, 100 + (y++)*20 );
-
-    //bookmark
     
     super.draw();
   }

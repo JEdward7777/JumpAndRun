@@ -61,9 +61,9 @@ Done.  Well, need to make it not take so long to air baby up because the sound i
 
 Added faces.
 
----todo.
+[x] Remove debug information from screen.
 
-[ ] Remove debug information from screen.
+---todo.
 
 ---
 
